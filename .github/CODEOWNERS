@@ -1,11 +1,11 @@
-# Default project owner
+# 默认项目负责人
 * @project-lead
 
-# Documentation and Obsidian knowledge base
+# 文档和 Obsidian 知识库
 /docs/ @project-lead
 /output/ @project-lead
 
-# Future application ownership
+# 后续应用代码负责人
 /app/ @owner-2
 /packages/core/ @owner-1
 /packages/integrations/ @owner-3

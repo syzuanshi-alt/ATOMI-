@@ -1,16 +1,20 @@
-# GitHub Projects 字段建议
+# GitHub 项目看板字段
 
-创建 GitHub Project 后，建议配置这些字段。
+项目看板字段优先使用中文。括号内英文只用于对照 GitHub 页面或插件。
 
-| 字段 | 类型 | 选项/说明 |
-|---|---|---|
-| Module | Single select | 平台底座与数据中台 / 产品后台与手机端体验 / 平台集成、AI 自动化与交付质量 / 文档交付 |
-| Owner | Text or Assignees | 负责人 1 / 负责人 2 / 负责人 3 / 3人共同 |
-| Status | Single select | Backlog / Ready / In Progress / Review / QA / Done / Blocked |
-| Due Date | Date | 任务截止日期 |
-| Review Gate | Text | 节点审核要求 |
-| Risk Level | Single select | Low / Medium / High |
-| Customer Visible | Single select | Yes / No |
-| Phase | Single select | V1 MVP / V1.1 / V2 |
+| 中文字段 | 英文对照 | 类型 | 建议选项 |
+|---|---|---|---|
+| 负责人 | Owner | 单选或指派人 | A / B / C / 项目负责人 |
+| 状态 | Status | 单选 | 未开始 / 进行中 / 待审核 / 已完成 / 阻塞 |
+| 截止日期 | Due Date | 日期 | 任务截止日期 |
+| 审核关卡 | Review Gate | 单选 | 无需审核 / 项目负责人审核 / Claude/Codex辅助审核 / 客户可见审核 |
+| 风险等级 | Risk Level | 单选 | 低 / 中 / 高 |
+| 客户可见 | Customer Visible | 单选 | 是 / 否 |
+| 阻塞原因 | Blocker | 文本 | 卡住原因 |
+| 验收证据 | Evidence | 文本 | PR、截图、测试结果、文档链接 |
 
-GitHub Projects 是执行主控；Obsidian 记录长期知识和审核结论。
+小白规则：
+
+1. 不知道怎么填时，先看 `docs/06-项目推进/GitHub项目看板配置手册.md`。
+2. 状态为“已完成”前，必须有验收证据。
+3. 风险等级为“高”的任务，每周五必须审核。

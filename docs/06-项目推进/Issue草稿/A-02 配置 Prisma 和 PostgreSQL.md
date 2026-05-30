@@ -8,7 +8,7 @@ due: 2026-06-05
 tags: [github, issue, database]
 ---
 
-# A-02 配置 Prisma 和 PostgreSQL
+# A-02 配置 Prisma（数据库工具）和 PostgreSQL（数据库）
 
 ## 背景
 
@@ -32,21 +32,21 @@ A-01 项目骨架完成。
 
 ## 操作步骤
 
-1. 建立 Prisma 配置草案。
-2. 准备 PostgreSQL 连接方式和 `.env.example`。
+1. 建立 Prisma（数据库工具） 配置草案。
+2. 准备 PostgreSQL（数据库） 连接方式和 `.env.example`。
 3. 不提交真实数据库密码。
 4. 对齐 `一期数据库模型.md`。
-5. 写迁移和 seed 的执行说明。
+5. 写迁移和 初始化测试数据（seed） 的执行说明。
 
 ## 验收标准
 
-- Prisma schema 能表达一期核心实体方向。
+- Prisma（数据库工具） 数据库结构文件（schema） 能表达一期核心实体方向。
 - `.env.example` 字段完整但无真实密钥。
 - 文档说明开发环境数据库如何准备。
 
 ## 测试方式
 
-执行 Prisma validate / migrate dev 或等价验证；失败原因写入 PR。
+执行 Prisma（数据库工具） validate / migrate dev 或等价验证；失败原因写入 拉取请求（PR）。
 
 ## 是否需要 Claude 审核
 
@@ -56,7 +56,6 @@ A-01 项目骨架完成。
 
 否。
 
-## GitHub Issue 链接
+## GitHub 任务卡（Issue） 链接
 
 [#2](https://github.com/syzuanshi-alt/ATOMI-/issues/2)
-

@@ -13,7 +13,7 @@ tags: [github, repository, push]
 - `D:\SHKF` 已初始化为本地 Git 仓库。
 - 主分支：`main`。
 - 首次提交：`chore: initialize ai ecommerce ops project`。
-- 本地已包含 Obsidian 知识库、正式方案、PRD、推进表、Issue/PR 模板和 CODEOWNERS。
+- 本地已包含 Obsidian 知识库、正式方案、PRD、推进表、任务卡/拉取请求（Issue/PR） 模板和 代码负责人配置（CODEOWNERS）。
 
 ## 推荐创建仓库
 
@@ -21,7 +21,7 @@ tags: [github, repository, push]
 
 - Repository name: `ai-ecommerce-ops-platform`
 - Visibility: `Private`
-- 不要勾选 README、.gitignore、license，因为本地已经有。
+- 不要勾选 说明文件（README）、.gitignore、license，因为本地已经有。
 
 ## 创建后推送
 
@@ -39,11 +39,11 @@ D:\SHKF\scripts\connect-github-remote.ps1 -RepositoryUrl "https://github.com/你
 
 ## 推送后必须设置
 
-- 开启 branch protection：保护 `main`。
+- 开启 主分支保护（branch protection）：保护 `main`。
 - 禁止直接 push 到 `main`。
-- PR 至少 1 人 review。
-- 数据库、权限、同步、AI、飞书、邮件相关 PR 建议 2 人 review。
-- 创建 GitHub Project，并参考 `.github/project-fields.md` 配置字段。
+- 拉取请求（PR） 至少 1 人 review。
+- 数据库、权限、同步、AI、飞书、邮件相关 拉取请求（PR） 建议 2 人 review。
+- 创建 GitHub 项目看板（Project），并参考 `.github/project-fields.md` 配置字段。
 
 ## 注意
 

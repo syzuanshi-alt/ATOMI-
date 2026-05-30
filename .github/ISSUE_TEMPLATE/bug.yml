@@ -1,34 +1,42 @@
-name: Bug
-description: 缺陷、漏洞或行为异常
-title: "[Bug] "
-labels: ["type:bug"]
+name: 问题反馈
+description: 记录漏洞、错误、异常、数据不一致
+title: "[问题] "
 body:
   - type: textarea
-    id: observed
+    id: problem
     attributes:
-      label: Observed Behavior
-      description: 实际发生了什么？
+      label: 问题描述
+      description: 发生了什么？不要只写“有问题”。
     validations:
       required: true
   - type: textarea
     id: expected
     attributes:
-      label: Expected Behavior
-      description: 应该发生什么？
+      label: 期望结果
+      description: 正常情况下应该是什么样？
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际结果
+      description: 现在实际是什么样？
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 按 1、2、3 写清楚，别人能照着复现。
     validations:
       required: true
   - type: dropdown
     id: risk
     attributes:
-      label: Risk Level
+      label: 风险等级（Risk Level）
       options:
-        - Low
-        - Medium
-        - High
+        - 低
+        - 中
+        - 高
     validations:
       required: true
-  - type: textarea
-    id: reproduce
-    attributes:
-      label: Reproduction Steps
-      placeholder: "1. ..."

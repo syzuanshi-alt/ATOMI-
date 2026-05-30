@@ -1,33 +1,39 @@
-name: Node Review
-description: 每周节点审核记录
-title: "[Node Review] "
-labels: ["type:review"]
+name: 节点审核
+description: 每周五或阶段节点审核记录
+title: "[节点审核] "
 body:
   - type: input
     id: review_date
     attributes:
-      label: Review Date
-      placeholder: "2026-06-05"
+      label: 审核日期
+      description: 例如 2026-06-05。
     validations:
       required: true
   - type: textarea
-    id: completed
+    id: scope
     attributes:
-      label: Completed
-      description: 本周完成内容
+      label: 审核范围
+      description: 本次审核哪些任务、PR、文档、接口或风险？
     validations:
       required: true
   - type: textarea
-    id: gaps
+    id: findings
     attributes:
-      label: Gaps / Drift
-      description: 有没有跑偏、漏洞、返工风险？
+      label: 发现的问题
+      description: 写清楚问题、责任人、影响。
     validations:
       required: true
   - type: textarea
-    id: adjustments
+    id: decision
     attributes:
-      label: Adjustments
-      description: 下周策略调整
+      label: 审核结论
+      description: 通过 / 有条件通过 / 不通过，并说明原因。
+    validations:
+      required: true
+  - type: textarea
+    id: next_steps
+    attributes:
+      label: 后续动作
+      description: 哪些任务要新增、延后、删除或调整？
     validations:
       required: true

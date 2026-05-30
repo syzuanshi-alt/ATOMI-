@@ -34,19 +34,19 @@ A-02 数据库配置完成。
 
 1. 建立 tenants、users、roles、permissions、user_tenant_roles。
 2. 定义平台总管理员、客户老板、运营、客服、只读观察者。
-3. 写基础 seed 数据。
+3. 写基础 初始化测试数据（seed） 数据。
 4. 更新权限模型文档。
-5. 在 PR 中说明每个角色能做什么。
+5. 在 拉取请求（PR） 中说明每个角色能做什么。
 
 ## 验收标准
 
 - 同一用户可属于多个租户。
 - 权限按租户隔离。
-- 文档和 schema 一致。
+- 文档和 数据库结构文件（schema） 一致。
 
 ## 测试方式
 
-写基础模型测试或 seed 验证步骤；PR 附验证结果。
+写基础模型测试或 初始化测试数据（seed） 验证步骤；拉取请求（PR） 附验证结果。
 
 ## 是否需要 Claude 审核
 
@@ -56,7 +56,7 @@ A-02 数据库配置完成。
 
 否。
 
-## GitHub Issue 链接
+## GitHub 任务卡（Issue） 链接
 
 [#3](https://github.com/syzuanshi-alt/ATOMI-/issues/3)
 

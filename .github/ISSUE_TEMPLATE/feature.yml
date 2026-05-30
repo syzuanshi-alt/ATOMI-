@@ -1,36 +1,56 @@
-name: Feature
-description: 新功能或模块任务
-title: "[Feature] "
-labels: ["type:feature"]
+name: 功能任务
+description: 新功能、新页面、新接口、新文档任务
+title: "[任务] "
 body:
   - type: textarea
-    id: business_goal
+    id: background
     attributes:
-      label: Business Goal
-      description: 这个任务解决什么业务问题？
+      label: 背景
+      description: 为什么要做这件事？解决什么业务问题？
     validations:
       required: true
-  - type: dropdown
-    id: module
+  - type: input
+    id: owner
     attributes:
-      label: Module
-      options:
-        - 平台底座与数据中台
-        - 产品后台与手机端体验
-        - 平台集成、AI 自动化与交付质量
-        - 文档/交付资料
+      label: 负责人
+      description: 先写 A / B / C / 项目负责人；账号确定后再写 GitHub 用户名。
+    validations:
+      required: true
+  - type: input
+    id: due_date
+    attributes:
+      label: 截止日期
+      description: 例如 2026-06-05。
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 操作步骤
+      description: 小白也要能照着做，尽量写成 1、2、3。
     validations:
       required: true
   - type: textarea
     id: acceptance
     attributes:
-      label: Acceptance Criteria
-      description: 可验收的完成标准
-      placeholder: "- [ ] ..."
+      label: 验收标准
+      description: 做到什么程度才算完成？
     validations:
       required: true
   - type: textarea
-    id: risks
+    id: test
     attributes:
-      label: Risks / Dependencies
-      description: 接口、权限、数据、安全或交付风险
+      label: 测试方式/验收证据
+      description: 截图、PR、文档链接、命令输出都可以。
+    validations:
+      required: true
+  - type: dropdown
+    id: risk
+    attributes:
+      label: 风险等级（Risk Level）
+      options:
+        - 低
+        - 中
+        - 高
+    validations:
+      required: true
