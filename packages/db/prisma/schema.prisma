@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum TenantStatus {
+  trial
+  active
+  paused
+}
+
+enum SyncRunStatus {
+  queued
+  running
+  succeeded
+  failed
+}
+
+enum AuditLevel {
+  info
+  warning
+  critical
+}
+
+model Tenant {
+  id          String              @id @default(cuid())
+  name        String
+  status      TenantStatus        @default(trial)
+  plan        String              @default("pilot")
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  members     TenantMember[]
+  roles       Role[]
+  syncJobs    SyncJob[]
+  auditLogs   AuditLog[]
+
+  @@map("tenants")
+}
+
+model User {
+  id           String          @id @default(cuid())
+  email        String          @unique
+  name         String
+  passwordHash String?
+  status       String          @default("active")
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  memberships  TenantMember[]
+  auditLogs     AuditLog[]
+
+  @@map("users")
+}
+
+model TenantMember {
+  id        String   @id @default(cuid())
+  tenantId  String
+  userId    String
+  roleId    String
+  status    String   @default("active")
+  createdAt DateTime @default(now())
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, userId, roleId])
+  @@index([tenantId])
+  @@map("tenant_members")
+}
+
+model Role {
+  id          String          @id @default(cuid())
+  tenantId    String?
+  name        String
+  scope       String          @default("tenant")
+  description String?
+  createdAt   DateTime        @default(now())
+  tenant      Tenant?         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  members     TenantMember[]
+  permissions RolePermission[]
+
+  @@index([tenantId])
+  @@map("roles")
+}
+
+model Permission {
+  id          String           @id @default(cuid())
+  key         String           @unique
+  module      String
+  description String
+  roles       RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model SyncJob {
+  id        String    @id @default(cuid())
+  tenantId  String
+  source    String
+  name      String
+  schedule  String?
+  enabled   Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  runs      SyncRun[]
+
+  @@index([tenantId, source])
+  @@map("sync_jobs")
+}
+
+model SyncRun {
+  id           String        @id @default(cuid())
+  jobId        String
+  status       SyncRunStatus @default(queued)
+  startedAt    DateTime?
+  finishedAt   DateTime?
+  errorMessage String?
+  recordsIn    Int           @default(0)
+  recordsOut   Int           @default(0)
+  job          SyncJob       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId, status])
+  @@map("sync_runs")
+}
+
+model AuditLog {
+  id        String     @id @default(cuid())
+  tenantId  String?
+  actorId   String?
+  action    String
+  target    String
+  level     AuditLevel @default(info)
+  metadata  Json?
+  createdAt DateTime   @default(now())
+  tenant    Tenant?    @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  actor     User?      @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, action])
+  @@map("audit_logs")
+}

@@ -14,6 +14,7 @@ docs/.trash/
 *.tmp
 *.bak
 ~$*
+/.logs/
 
 # Node / Next.js future app artifacts
 node_modules/
@@ -21,6 +22,7 @@ node_modules/
 out/
 dist/
 coverage/
+packages/db/src/generated/
 
 # Env and secrets
 .env

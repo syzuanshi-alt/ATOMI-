@@ -35,3 +35,63 @@ output/spreadsheets/        项目推进、责任、接口、风险工作簿
 - 周期：2026-06-01 至 2026-08-07。
 - 团队：3 人。
 - 目标：交付可内部试点的 AI 电商自动化平台最小可用版本（MVP）。
+
+## 本地开发启动
+
+本项目使用 pnpm（包管理工具）管理多包工作区。
+
+常见英文词说明：
+
+- pnpm：包管理工具，用来安装和运行项目依赖。
+- Next.js：网页应用框架，用来开发电脑端后台和手机端 H5/PWA。
+- Prisma：数据库工具，用来管理数据库模型和生成数据库访问代码。
+- TypeScript：带类型检查的 JavaScript，用来提前发现代码错误。
+
+### 第一次安装
+
+```powershell
+cd D:\SHKF
+pnpm install
+```
+
+### 启动电脑端后台
+
+```powershell
+cd D:\SHKF
+pnpm dev
+```
+
+默认访问：
+
+```text
+http://localhost:3000
+```
+
+### 数据库骨架检查
+
+第一次检查前，先生成数据库访问代码：
+
+```powershell
+cd D:\SHKF
+pnpm db:generate
+```
+
+再检查数据库结构：
+
+```powershell
+cd D:\SHKF
+pnpm db:validate
+```
+
+注意：真实数据库连接写到 `.env` 或 `.env.local`，不要提交到 GitHub。
+
+### 一次性完整检查
+
+提交代码前建议执行：
+
+```powershell
+cd D:\SHKF
+pnpm verify
+```
+
+这条命令会依次完成：生成数据库访问代码、检查数据库结构、检查代码类型、构建网页应用。
