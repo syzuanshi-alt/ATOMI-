@@ -58,4 +58,5 @@ A-02 数据库配置完成。
 
 ## GitHub Issue 链接
 
-待创建
+[#3](https://github.com/syzuanshi-alt/ATOMI-/issues/3)
+

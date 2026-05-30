@@ -58,4 +58,5 @@ GitHub 仓库已初始化；Obsidian 知识库已建立。
 
 ## GitHub Issue 链接
 
-待创建
+[#1](https://github.com/syzuanshi-alt/ATOMI-/issues/1)
+

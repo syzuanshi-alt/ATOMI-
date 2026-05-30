@@ -58,4 +58,5 @@ A-01 项目骨架完成。
 
 ## GitHub Issue 链接
 
-待创建
+[#2](https://github.com/syzuanshi-alt/ATOMI-/issues/2)
+

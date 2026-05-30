@@ -32,3 +32,16 @@ tags: [github, issues, execution, week1, week2]
 | [[C-01 配置飞书测试应用信息清单]] | C | 2026-06-03 | 是 | 否 |
 | [[C-02 接口准备清单]] | C | 2026-06-05 | 是 | 否 |
 | [[C-03 AI 日报字段和测试清单]] | C | 2026-06-12 | 是 | 是 |
+## 已创建 GitHub Issues
+
+- #1 [A-01 创建 Next.js 项目骨架](https://github.com/syzuanshi-alt/ATOMI-/issues/1)
+- #2 [A-02 配置 Prisma 和 PostgreSQL](https://github.com/syzuanshi-alt/ATOMI-/issues/2)
+- #3 [A-03 建 tenants-users-roles 基础模型](https://github.com/syzuanshi-alt/ATOMI-/issues/3)
+- #4 [A-04 写租户隔离测试](https://github.com/syzuanshi-alt/ATOMI-/issues/4)
+- #5 [B-01 绘制平台总控页面结构](https://github.com/syzuanshi-alt/ATOMI-/issues/5)
+- #6 [B-02 客户后台信息架构](https://github.com/syzuanshi-alt/ATOMI-/issues/6)
+- #7 [B-03 手机端轻工作台结构](https://github.com/syzuanshi-alt/ATOMI-/issues/7)
+- #8 [C-01 配置飞书测试应用信息清单](https://github.com/syzuanshi-alt/ATOMI-/issues/8)
+- #9 [C-02 接口准备清单](https://github.com/syzuanshi-alt/ATOMI-/issues/9)
+- #10 [C-03 AI 日报字段和测试清单](https://github.com/syzuanshi-alt/ATOMI-/issues/10)
+
