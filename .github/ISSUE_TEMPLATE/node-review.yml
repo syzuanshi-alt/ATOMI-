@@ -1,0 +1,33 @@
+name: Node Review
+description: 每周节点审核记录
+title: "[Node Review] "
+labels: ["type:review"]
+body:
+  - type: input
+    id: review_date
+    attributes:
+      label: Review Date
+      placeholder: "2026-06-05"
+    validations:
+      required: true
+  - type: textarea
+    id: completed
+    attributes:
+      label: Completed
+      description: 本周完成内容
+    validations:
+      required: true
+  - type: textarea
+    id: gaps
+    attributes:
+      label: Gaps / Drift
+      description: 有没有跑偏、漏洞、返工风险？
+    validations:
+      required: true
+  - type: textarea
+    id: adjustments
+    attributes:
+      label: Adjustments
+      description: 下周策略调整
+    validations:
+      required: true

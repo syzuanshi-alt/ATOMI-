@@ -1,0 +1,13 @@
+# Default project owner
+* @project-lead
+
+# Documentation and Obsidian knowledge base
+/docs/ @project-lead
+/output/ @project-lead
+
+# Future application ownership
+/app/ @owner-2
+/packages/core/ @owner-1
+/packages/integrations/ @owner-3
+/packages/jobs/ @owner-3
+/prisma/ @owner-1

@@ -1,0 +1,36 @@
+name: Feature
+description: 新功能或模块任务
+title: "[Feature] "
+labels: ["type:feature"]
+body:
+  - type: textarea
+    id: business_goal
+    attributes:
+      label: Business Goal
+      description: 这个任务解决什么业务问题？
+    validations:
+      required: true
+  - type: dropdown
+    id: module
+    attributes:
+      label: Module
+      options:
+        - 平台底座与数据中台
+        - 产品后台与手机端体验
+        - 平台集成、AI 自动化与交付质量
+        - 文档/交付资料
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: 可验收的完成标准
+      placeholder: "- [ ] ..."
+    validations:
+      required: true
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks / Dependencies
+      description: 接口、权限、数据、安全或交付风险

@@ -1,0 +1,34 @@
+name: Bug
+description: 缺陷、漏洞或行为异常
+title: "[Bug] "
+labels: ["type:bug"]
+body:
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed Behavior
+      description: 实际发生了什么？
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: 应该发生什么？
+    validations:
+      required: true
+  - type: dropdown
+    id: risk
+    attributes:
+      label: Risk Level
+      options:
+        - Low
+        - Medium
+        - High
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction Steps
+      placeholder: "1. ..."

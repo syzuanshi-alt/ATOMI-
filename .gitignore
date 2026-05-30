@@ -1,0 +1,31 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Obsidian local state
+docs/.obsidian/workspace.json
+docs/.obsidian/workspace-mobile.json
+docs/.obsidian/cache/
+docs/.trash/
+
+# Logs and temp
+*.log
+*.tmp
+*.bak
+~$*
+
+# Node / Next.js future app artifacts
+node_modules/
+.next/
+out/
+dist/
+coverage/
+
+# Env and secrets
+.env
+.env.*
+!.env.example
+
+# Local generated previews
+output/**/_preview_*.png
