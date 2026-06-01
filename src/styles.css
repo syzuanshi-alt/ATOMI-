@@ -783,6 +783,153 @@ pre {
   flex: 1;
 }
 
+.support-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.support-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.35fr);
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.support-thread-list {
+  display: grid;
+  gap: 10px;
+}
+
+.support-thread-card {
+  display: grid;
+  width: 100%;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.04);
+  text-align: left;
+}
+
+.support-thread-card:hover,
+.support-thread-card.is-active {
+  border-color: rgba(85, 215, 194, 0.45);
+  background: rgba(85, 215, 194, 0.09);
+}
+
+.support-thread-card small {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.support-channel {
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.support-detail-card header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.message-box {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.message-box + .message-box {
+  margin-top: 10px;
+}
+
+.message-box span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.message-box p {
+  margin-bottom: 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.ai-draft {
+  border-color: rgba(85, 215, 194, 0.32);
+  background: rgba(85, 215, 194, 0.08);
+}
+
+.collected-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.collected-list span {
+  display: inline-flex;
+  min-height: 26px;
+  align-items: center;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.support-next-action {
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 8px;
+  color: var(--muted);
+  background: rgba(217, 180, 106, 0.08);
+  line-height: 1.6;
+}
+
+.support-next-action strong {
+  color: var(--text);
+}
+
+.support-detail-card footer {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.support-detail-card footer button {
+  flex: 1;
+}
+
+.handoff-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.handoff-card {
+  min-height: 112px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.handoff-card p {
+  margin: 10px 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
 .gdpr-tool {
   display: grid;
   grid-template-columns: 1fr 260px;
@@ -842,6 +989,7 @@ pre {
 
   .split-grid,
   .hero-ops,
+  .support-layout,
   .gdpr-tool,
   .upload-panel {
     grid-template-columns: 1fr;
@@ -852,6 +1000,8 @@ pre {
   .creator-detail-grid,
   .video-grid,
   .role-action-grid,
+  .support-summary-grid,
+  .handoff-grid,
   .creative-board,
   .order-timeline,
   .approval-list,
@@ -880,6 +1030,9 @@ pre {
   .journey-track,
   .roi-summary,
   .role-action-grid,
+  .support-summary-grid,
+  .support-layout,
+  .handoff-grid,
   .creative-board,
   .order-timeline,
   .approval-list,

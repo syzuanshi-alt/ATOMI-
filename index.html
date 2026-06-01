@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ATOMI SHINE AI Growth OS</title>
+    <title>AI电商自动化运营平台</title>
     <link rel="stylesheet" href="src/styles.css" />
   </head>
   <body>
@@ -14,26 +14,27 @@
             <span></span>
           </div>
           <div>
-            <p class="eyebrow">ATOMI SHINE</p>
-            <h1>AI Growth OS</h1>
+            <p class="eyebrow">AI 电商自动化</p>
+            <h1>运营平台</h1>
           </div>
         </div>
 
         <nav class="nav-list" aria-label="主导航">
           <button class="nav-item is-active" data-view="dashboard" data-roles="owner,bd,media,support,admin">经营看板</button>
           <button class="nav-item" data-view="integrations" data-roles="admin">数据接入</button>
-          <button class="nav-item" data-view="creators" data-roles="owner,bd,admin">达人 CRM</button>
+          <button class="nav-item" data-view="supportHub" data-roles="owner,support,admin">统一客服</button>
+          <button class="nav-item" data-view="creators" data-roles="owner,bd,admin">达人 BD</button>
           <button class="nav-item" data-view="creatives" data-roles="bd,media,admin">内容中心</button>
           <button class="nav-item" data-view="ads" data-roles="owner,media,admin">广告驾驶舱</button>
           <button class="nav-item" data-view="orders" data-roles="owner,support,admin">订单履约</button>
           <button class="nav-item" data-view="actions" data-roles="owner,bd,media,support,admin">AI 确认中心</button>
-          <button class="nav-item" data-view="privacy" data-roles="support,admin">GDPR</button>
+          <button class="nav-item" data-view="privacy" data-roles="support,admin">GDPR 合规</button>
         </nav>
 
         <section class="mode-panel" aria-label="系统模式">
           <div>
             <p class="eyebrow">当前模式</p>
-            <strong id="modeLabel">Demo Mode</strong>
+            <strong id="modeLabel">Demo 模式</strong>
           </div>
           <label class="switch">
             <input id="modeToggle" type="checkbox" />
@@ -46,9 +47,9 @@
           <label>
             <span>当前登录身份</span>
             <select id="roleSelect">
-              <option value="owner">老板 / GM</option>
+              <option value="owner">老板 / 经营者</option>
               <option value="bd">BD / 达人运营</option>
-              <option value="media">投流 / Media Buyer</option>
+              <option value="media">投流 / 广告投手</option>
               <option value="support">客服 / 履约</option>
               <option value="admin">管理员 / 系统</option>
             </select>
@@ -70,7 +71,7 @@
       <main class="workspace">
         <header class="topbar">
           <div>
-            <p class="eyebrow">Short video → creators → ads → store → fulfillment</p>
+            <p class="eyebrow">短视频 → 达人 → 投流 → 独立站 → 订单履约</p>
             <h2 id="viewTitle">经营看板</h2>
           </div>
           <div class="topbar-actions">
@@ -82,9 +83,9 @@
         <section id="dashboard" class="view is-visible">
           <div class="hero-ops">
             <div class="hero-copy">
-              <p class="eyebrow">全链路 AI 增长驾驶台</p>
-              <h3>让 AS 先用模拟数据看见增长闭环，再一键切到真实账号。</h3>
-              <p>模板已预留 TikTok、Instagram、Meta Ads、独立站订单、物流和客服入口。关键动作默认进入人工确认队列。</p>
+              <p class="eyebrow">AI 电商自动化运营平台</p>
+              <h3>先用 Demo 跑通经营、客服、订单和投流闭环，再逐步接入真实平台。</h3>
+              <p>一期重点做可交付后台、统一客服托管、订单物流同步和 AI 审核边界。真实账号、真实密钥、真实客户消息必须进入后端权限和人工审核流程。</p>
             </div>
             <div class="watch-signal" aria-label="腕表业务视觉信号">
               <div class="strap top"></div>
@@ -138,7 +139,7 @@
         <section id="integrations" class="view">
           <div class="section-head">
             <div>
-              <p class="eyebrow">Live Mode 准备区</p>
+              <p class="eyebrow">真实模式准备区</p>
               <h3>客户填入平台或账号数据即可替换 Demo 数据</h3>
             </div>
             <button class="primary-button" id="saveIntegrations">保存连接</button>
@@ -161,7 +162,7 @@
         <section id="creators" class="view">
           <div class="section-head">
             <div>
-              <p class="eyebrow">Creator CRM</p>
+              <p class="eyebrow">达人 BD 管理</p>
               <h3>达人发现、评分、建联、寄样、ROI 复盘</h3>
             </div>
             <button class="primary-button" id="generateDm">生成英文建联话术</button>
@@ -172,7 +173,7 @@
         <section id="creatorDetail" class="view">
           <div class="section-head">
             <div>
-              <p class="eyebrow">Creator Detail</p>
+              <p class="eyebrow">达人详情</p>
               <h3 id="creatorDetailTitle">达人合作链路</h3>
             </div>
             <div class="topbar-actions">
@@ -186,7 +187,7 @@
         <section id="creatives" class="view">
           <div class="section-head">
             <div>
-              <p class="eyebrow">Creative Center</p>
+              <p class="eyebrow">素材投流中心</p>
               <h3>短视频素材评分与投流池</h3>
             </div>
             <button class="primary-button" id="scoreCreative">AI 重新评分</button>
@@ -197,7 +198,7 @@
         <section id="ads" class="view">
           <div class="section-head">
             <div>
-              <p class="eyebrow">Ads Cockpit</p>
+              <p class="eyebrow">广告驾驶舱</p>
               <h3>按素材、国家、人群、订单、利润评估真实价值</h3>
             </div>
             <button class="primary-button" id="draftBudget">生成预算建议</button>
@@ -205,10 +206,57 @@
           <div class="ad-table" id="adTable"></div>
         </section>
 
+        <section id="supportHub" class="view">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">统一客服工作台</p>
+              <h3>多渠道消息先统一接收，AI 只托管低风险问题</h3>
+            </div>
+            <button class="primary-button" id="simulateSupportMessage">模拟新消息</button>
+          </div>
+
+          <div class="support-summary-grid" id="supportOverview"></div>
+
+          <div class="support-layout">
+            <section class="panel support-thread-panel">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">消息队列</p>
+                  <h3>按风险和成交机会排序</h3>
+                </div>
+                <span class="status-pill status-demo">Demo 数据</span>
+              </div>
+              <div class="support-thread-list" id="supportThreads"></div>
+            </section>
+
+            <section class="panel support-detail-panel">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">AI 草稿与人工接管</p>
+                  <h3>自动回复只允许低风险引导</h3>
+                </div>
+                <span class="status-pill status-connected">人工确认</span>
+              </div>
+              <div id="supportDetail"></div>
+            </section>
+          </div>
+
+          <section class="panel handoff-panel">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">离线托管日报</p>
+                <h3>客服上班后先看这张清单</h3>
+              </div>
+              <button class="ghost-button" data-view-link="actions">查看 AI 审核</button>
+            </div>
+            <div class="handoff-grid" id="handoffReport"></div>
+          </section>
+        </section>
+
         <section id="orders" class="view">
           <div class="section-head">
             <div>
-              <p class="eyebrow">Order Center</p>
+              <p class="eyebrow">订单物流中心</p>
               <h3>定制信息结构化与履约预警</h3>
             </div>
             <button class="primary-button" id="structureOrders">结构化定制信息</button>
@@ -219,7 +267,7 @@
         <section id="actions" class="view">
           <div class="section-head">
             <div>
-              <p class="eyebrow">Human-in-the-loop</p>
+              <p class="eyebrow">人工审核 Human-in-the-loop</p>
               <h3>改预算、发消息、处理售后必须人工确认</h3>
             </div>
             <button class="primary-button" id="approveAll">批准低风险动作</button>
@@ -230,7 +278,7 @@
         <section id="privacy" class="view">
           <div class="section-head">
             <div>
-              <p class="eyebrow">GDPR & Audit</p>
+              <p class="eyebrow">GDPR 合规 / 审计</p>
               <h3>客户数据查询、删除、匿名化与审计</h3>
             </div>
             <button class="primary-button" id="runGdpr">生成删除工单</button>

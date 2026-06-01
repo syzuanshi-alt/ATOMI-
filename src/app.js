@@ -1,29 +1,30 @@
 const viewTitles = {
   dashboard: "经营看板",
   integrations: "数据接入",
-  creators: "达人 CRM",
+  creators: "达人 BD",
   creatorDetail: "达人详情",
   creatives: "内容中心",
   ads: "广告驾驶舱",
+  supportHub: "统一客服工作台",
   orders: "订单履约",
   actions: "AI 确认中心",
-  privacy: "GDPR",
+  privacy: "GDPR 合规",
 };
 
 let currentRole = "owner";
 
 const roleConfigs = {
   owner: {
-    label: "老板 / GM",
-    badge: "GMV / ROAS",
+    label: "老板 / 经营者",
+    badge: "成交额 / 投产比",
     description: "经营者视图：看 GMV、真实 ROAS、预算风险和高影响动作。",
     defaultView: "dashboard",
-    allowedViews: ["dashboard", "creators", "creatorDetail", "ads", "orders", "actions"],
+    allowedViews: ["dashboard", "supportHub", "creators", "creatorDetail", "ads", "orders", "actions"],
     homeTitle: "老板今日决策台",
     actions: [
       { title: "确认 US 广告预算 +20%", detail: "真实毛利 ROAS 4.22x，但会增加日消耗，需要老板确认。", target: "actions", cta: "去确认" },
+      { title: "查看夜间客服风险", detail: "AI 离线托管收集了 6 条潜在成交和 2 条售后风险，需客服上班后接管。", target: "supportHub", cta: "看客服日报" },
       { title: "复盘达人投流回本", detail: "@watchwithmia 已产生投流 GMV，可判断是否续约。", target: "creators", cta: "看达人 ROI" },
-      { title: "查看国家利润排行", detail: "US / CA 当前 CPA 更低，DE / FR 需要控制测试预算。", target: "ads", cta: "看广告驾驶舱" },
     ],
   },
   bd: {
@@ -40,7 +41,7 @@ const roleConfigs = {
     ],
   },
   media: {
-    label: "投流 / Media Buyer",
+    label: "投流 / 广告投手",
     badge: "CPA / Creative",
     description: "投流视图：看素材、国家、人群、CPA、真实毛利 ROAS 和预算动作。",
     defaultView: "ads",
@@ -54,15 +55,15 @@ const roleConfigs = {
   },
   support: {
     label: "客服 / 履约",
-    badge: "Orders / GDPR",
-    description: "客服视图：看定制确认、生产物流、售后风险和 GDPR 请求。",
-    defaultView: "orders",
-    allowedViews: ["dashboard", "orders", "actions", "privacy"],
-    homeTitle: "客服今日履约台",
+    badge: "客服 / 订单",
+    description: "客服视图：看统一消息、AI 草稿、离线托管日报、订单物流、售后风险和 GDPR 请求。",
+    defaultView: "supportHub",
+    allowedViews: ["dashboard", "supportHub", "orders", "actions", "privacy"],
+    homeTitle: "客服今日处理台",
     actions: [
+      { title: "处理离线托管日报", detail: "昨晚 AI 只回复低风险问题，并收集订单号、邮箱、截图和问题类型。", target: "supportHub", cta: "看统一客服" },
       { title: "确认 AS-1028 刻字信息", detail: "客户刻字疑似需要二次确认，AI 已准备英文回复草稿。", target: "orders", cta: "看订单" },
       { title: "处理 UK 物流延迟", detail: "AS-1041 出现 carrier delay，需要提前安抚客户。", target: "actions", cta: "处理售后" },
-      { title: "创建 GDPR 工单", detail: "支持 email / phone / customerId 查询后删除或匿名化。", target: "privacy", cta: "去 GDPR" },
     ],
   },
   admin: {
@@ -70,12 +71,12 @@ const roleConfigs = {
     badge: "Access / Audit",
     description: "管理员视图：看平台接入、权限、同步状态、合规和审计。",
     defaultView: "integrations",
-    allowedViews: ["dashboard", "integrations", "creators", "creatorDetail", "creatives", "ads", "orders", "actions", "privacy"],
+    allowedViews: ["dashboard", "integrations", "supportHub", "creators", "creatorDetail", "creatives", "ads", "orders", "actions", "privacy"],
     homeTitle: "系统管理员控制台",
     actions: [
       { title: "配置平台连接", detail: "API token 只进后端，前端只显示连接状态。", target: "integrations", cta: "接入平台" },
+      { title: "检查客服托管边界", detail: "确认 AI 不会自动承诺退款、补偿、改价、取消订单或发送真实消息。", target: "supportHub", cta: "看客服规则" },
       { title: "检查 AI 动作审计", detail: "预算、发信、客服回复都必须留下确认记录。", target: "actions", cta: "看动作" },
-      { title: "验证 GDPR 删除链路", detail: "覆盖订单、客服、广告受众、AI 样本和审计日志。", target: "privacy", cta: "看合规" },
     ],
   },
 };
@@ -188,6 +189,72 @@ const approvals = [
   { title: "暂停 DE 低效素材", risk: "low", owner: "投流", detail: "CPA 高于目标 38%，素材 3 秒吸引力低于 70 分。" },
   { title: "订单 AS-1028 定制信息确认", risk: "medium", owner: "客服", detail: "客户刻字字段疑似包含拼写错误，建议发确认邮件。" },
 ];
+
+const supportThreads = [
+  {
+    id: "thread-livechat-01",
+    channel: "独立站客服",
+    customer: "Emily R.",
+    language: "英文",
+    status: "AI 托管中",
+    risk: "low",
+    lastMessage: "Can I get this watch with a short engraving for my husband?",
+    translated: "我能不能给我丈夫买这块表，并刻一段短文字？",
+    aiDraft: "可以的。请把想刻的英文内容发给我们，并确认收货国家。客服上班后会再次帮您确认刻字格式。",
+    collected: ["购买意向：礼物", "语言：英文", "需求：刻字", "缺少：国家和邮箱"],
+    nextAction: "继续收集邮箱、国家和刻字内容，暂不承诺具体发货时间。",
+  },
+  {
+    id: "thread-email-02",
+    channel: "邮件",
+    customer: "AS-1041 / Mark",
+    language: "英文",
+    status: "待人工接管",
+    risk: "high",
+    lastMessage: "My package is late. I want a refund if it does not arrive tomorrow.",
+    translated: "我的包裹延迟了。如果明天不到，我想退款。",
+    aiDraft: "我已经记录您的订单和物流问题。退款、补偿和具体到达时间需要人工客服核实后处理，客服上班后会优先跟进。",
+    collected: ["订单号：AS-1041", "问题类型：物流延迟", "诉求：可能退款", "风险：退款承诺"],
+    nextAction: "转人工，核对物流轨迹和退款政策。AI 禁止承诺退款或补偿。",
+    orderRef: "AS-1041",
+  },
+  {
+    id: "thread-form-03",
+    channel: "独立站留言",
+    customer: "Lina / Germany",
+    language: "英文",
+    status: "可发草稿",
+    risk: "medium",
+    lastMessage: "Do you ship to Germany and can I pay by PayPal?",
+    translated: "你们发德国吗？可以用 PayPal 付款吗？",
+    aiDraft: "我们已收到您的咨询。请留下邮箱，客服会确认当前德国可用配送方式和付款方式后回复您。",
+    collected: ["国家：德国", "问题：配送和付款方式", "缺少：邮箱"],
+    nextAction: "客服确认德国配送和付款方式后发送正式回复。",
+  },
+  {
+    id: "thread-feishu-04",
+    channel: "飞书提醒",
+    customer: "内部提醒 / 店铺表单",
+    language: "中文",
+    status: "待人工接管",
+    risk: "medium",
+    lastMessage: "客户上传了刻字截图，图片内容需要确认是否能生产。",
+    translated: "客户上传了刻字截图，图片内容需要确认是否能生产。",
+    aiDraft: "已记录图片确认需求。需要客服和生产同事共同确认后再回复客户。",
+    collected: ["问题：图片定制确认", "需要：生产确认", "风险：生产能力承诺"],
+    nextAction: "客服把截图转给生产确认，不允许 AI 直接承诺可以生产。",
+    orderRef: "AS-1028",
+  },
+];
+
+const handoffItems = [
+  { label: "离线会话", value: "14", detail: "独立站 8 条，邮件 4 条，表单 2 条" },
+  { label: "潜在成交", value: "6", detail: "礼物刻字、德国配送、PayPal 咨询优先处理" },
+  { label: "售后风险", value: "2", detail: "物流延迟和退款诉求必须人工接管" },
+  { label: "AI 自动回复", value: "9", detail: "全部为低风险欢迎、收集信息、上班时间说明" },
+];
+
+let selectedSupportThreadId = supportThreads[0]?.id || "";
 
 const fmtMoney = (cents) => `$${(cents / 100).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 const fmtRoas = (bps) => `${(bps / 10000).toFixed(2)}x`;
@@ -494,6 +561,92 @@ const renderAds = () => {
   `;
 };
 
+const renderSupportHub = (threadId = selectedSupportThreadId) => {
+  selectedSupportThreadId = threadId;
+  const activeThread = supportThreads.find((item) => item.id === selectedSupportThreadId) || supportThreads[0];
+  const riskClass = activeThread.risk === "high" ? "error" : activeThread.risk === "low" ? "connected" : "demo";
+
+  $("#supportOverview").innerHTML = handoffItems
+    .map(
+      (item) => `
+      <article class="metric-card">
+        <p class="eyebrow">${item.label}</p>
+        <strong>${item.value}</strong>
+        <small>${item.detail}</small>
+      </article>
+    `,
+    )
+    .join("");
+
+  $("#supportThreads").innerHTML = supportThreads
+    .map((item) => {
+      const itemRiskClass = item.risk === "high" ? "error" : item.risk === "low" ? "connected" : "demo";
+      return `
+        <button class="support-thread-card ${item.id === activeThread.id ? "is-active" : ""}" data-support-thread="${item.id}">
+          <span class="support-channel">${item.channel}</span>
+          <strong>${item.customer}</strong>
+          <small>${item.translated}</small>
+          <span class="status-pill status-${itemRiskClass}">${item.risk === "high" ? "高风险" : item.risk === "medium" ? "中风险" : "低风险"}</span>
+        </button>
+      `;
+    })
+    .join("");
+
+  $("#supportDetail").innerHTML = `
+    <article class="support-detail-card">
+      <header>
+        <div>
+          <p class="eyebrow">${activeThread.channel} · ${activeThread.language}</p>
+          <h3>${activeThread.customer}</h3>
+        </div>
+        <span class="status-pill status-${riskClass}">${activeThread.status}</span>
+      </header>
+
+      <div class="message-box">
+        <span>客户原文</span>
+        <p>${activeThread.lastMessage}</p>
+      </div>
+      <div class="message-box">
+        <span>精准口语翻译</span>
+        <p>${activeThread.translated}</p>
+      </div>
+      <div class="message-box ai-draft">
+        <span>AI 回复草稿</span>
+        <p>${activeThread.aiDraft}</p>
+      </div>
+
+      <div class="collected-list">
+        ${activeThread.collected.map((item) => `<span>${item}</span>`).join("")}
+      </div>
+
+      <div class="support-next-action">
+        <strong>下一步：</strong>
+        <span>${activeThread.nextAction}</span>
+      </div>
+
+      <footer>
+        <button class="ghost-button" data-escalate-support="${activeThread.id}">转人工</button>
+        <button class="primary-button" data-draft-support="${activeThread.id}">保存草稿</button>
+      </footer>
+    </article>
+  `;
+
+  $("#handoffReport").innerHTML = [
+    ["今日优先处理", "物流延迟、退款诉求、生产能力确认，全部需要人工接管。"],
+    ["可继续托管", "欢迎语、询问订单号、收集邮箱、收集截图、说明客服上班时间。"],
+    ["禁止自动回复", "退款、补偿、改价、取消订单、承诺具体发货或到达时间。"],
+  ]
+    .map(
+      ([title, detail]) => `
+      <article class="handoff-card">
+        <strong>${title}</strong>
+        <p>${detail}</p>
+      </article>
+    `,
+    )
+    .join("");
+};
+
 const renderOrders = () => {
   const steps = [
     ["下单", "订单与渠道归因入库，金额用整数分存储。"],
@@ -544,8 +697,8 @@ const bindEvents = () => {
 
   $("#modeToggle").addEventListener("change", (event) => {
     const live = event.target.checked;
-    $("#modeLabel").textContent = live ? "Live Mode" : "Demo Mode";
-    showToast(live ? "已切换 Live Mode：请先完成平台连接。" : "已切回 Demo Mode：使用模拟数据演示。");
+    $("#modeLabel").textContent = live ? "真实模式" : "Demo 模式";
+    showToast(live ? "已切换真实模式：请先完成平台连接和权限配置。" : "已切回 Demo 模式：使用模拟数据演示。");
   });
 
   $("#roleSelect").addEventListener("change", (event) => {
@@ -577,6 +730,7 @@ const bindEvents = () => {
   $("#generateDm").addEventListener("click", () => showToast("已生成英文 DM 草稿，等待 BD 确认后发送。"));
   $("#scoreCreative").addEventListener("click", () => showToast("素材评分已更新，高分素材进入投流池。"));
   $("#draftBudget").addEventListener("click", () => showToast("预算建议已进入 AI 确认中心，不会自动改广告预算。"));
+  $("#simulateSupportMessage").addEventListener("click", () => showToast("已模拟一条独立站客服消息进入队列，真实版需走渠道 webhook 和审计日志。"));
   $("#structureOrders").addEventListener("click", () => showToast("定制字段已结构化，异常订单进入客服队列。"));
   $("#approveAll").addEventListener("click", () => showToast("低风险动作已批准，高风险预算动作仍需老板确认。"));
   $("#runGdpr").addEventListener("click", () => {
@@ -589,13 +743,21 @@ const bindEvents = () => {
 
   document.addEventListener("click", (event) => {
     const target = event.target;
-    const approved = target.dataset?.approve;
-    const rejected = target.dataset?.reject;
-    const creatorId = target.dataset?.creatorDetail;
-    const viewLink = target.dataset?.viewLink;
+    const actionTarget =
+      target.closest?.("[data-approve], [data-reject], [data-creator-detail], [data-view-link], [data-support-thread], [data-draft-support], [data-escalate-support]") || target;
+    const approved = actionTarget.dataset?.approve;
+    const rejected = actionTarget.dataset?.reject;
+    const creatorId = actionTarget.dataset?.creatorDetail;
+    const viewLink = actionTarget.dataset?.viewLink;
+    const supportThreadId = actionTarget.dataset?.supportThread;
+    const supportDraftId = actionTarget.dataset?.draftSupport;
+    const supportEscalateId = actionTarget.dataset?.escalateSupport;
     if (approved) showToast(`已确认：${approved}`);
     if (rejected) showToast(`已驳回：${rejected}`);
     if (viewLink) switchView(viewLink);
+    if (supportThreadId) renderSupportHub(supportThreadId);
+    if (supportDraftId) showToast("AI 回复草稿已保存，真实发送前必须由客服确认。");
+    if (supportEscalateId) showToast("已标记转人工，客服上班后会在托管日报中优先处理。");
     if (creatorId) {
       renderCreatorDetail(creatorId);
       switchView("creatorDetail");
@@ -612,6 +774,7 @@ const init = () => {
   renderCreatorDetail();
   renderCreatives();
   renderAds();
+  renderSupportHub();
   renderOrders();
   renderApprovals();
   applyRole(currentRole, true);
