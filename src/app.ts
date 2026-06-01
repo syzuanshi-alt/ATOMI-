@@ -226,12 +226,12 @@ const roleConfigs: Record<RoleId, RoleConfig> = {
 };
 
 const integrations: Integration[] = [
-  { id: "shopify", provider: "shopify", name: "Shopify / 独立站", hint: "订单、商品、客户、退款 webhook", status: "demo", placeholder: "store.myshopify.com" },
-  { id: "meta", provider: "meta_ads", name: "Meta Ads", hint: "广告花费、素材、国家、人群", status: "demo", placeholder: "act_********" },
-  { id: "tiktok", provider: "tiktok_ads", name: "TikTok Ads", hint: "短视频投流与素材表现", status: "demo", placeholder: "advertiser_id" },
-  { id: "instagram", provider: "instagram", name: "Instagram Graph", hint: "达人资料、互动、授权内容", status: "demo", placeholder: "business account id" },
-  { id: "logistics", provider: "logistics", name: "物流 API", hint: "生产、发货、签收、异常轨迹", status: "demo", placeholder: "carrier api profile" },
-  { id: "support", provider: "support", name: "客服系统", hint: "定制确认、售后、满意度", status: "demo", placeholder: "gorgias / zendesk" },
+  { id: "shopify", provider: "shopify", name: "Shopify / 独立站", hint: "同步订单、商品、客户、退款和店铺 webhook。", status: "demo", placeholder: "your-store.myshopify.com" },
+  { id: "meta", provider: "meta_ads", name: "Meta Ads", hint: "同步广告花费、素材、国家、人群和归因数据。", status: "demo", placeholder: "act_1234567890" },
+  { id: "tiktok", provider: "tiktok_ads", name: "TikTok Ads", hint: "同步短视频投流、广告组、素材表现和转化数据。", status: "demo", placeholder: "advertiser_id_123456" },
+  { id: "instagram", provider: "instagram", name: "Instagram Graph", hint: "同步达人资料、互动表现、授权内容和主页线索。", status: "demo", placeholder: "instagram_business_account_id" },
+  { id: "logistics", provider: "logistics", name: "物流 API", hint: "同步生产、发货、签收、异常轨迹和售后预警。", status: "demo", placeholder: "carrier_profile_or_api_account" },
+  { id: "support", provider: "support", name: "客服系统", hint: "同步定制确认、售后消息、满意度和人工接管记录。", status: "demo", placeholder: "zendesk_or_gorgias_workspace" },
 ];
 
 const kpis: Kpi[] = [
@@ -427,6 +427,7 @@ const switchView = (view: ViewId): void => {
   $(`#${view}`).classList.add("is-visible");
   document.querySelector<HTMLButtonElement>(`.nav-item[data-view="${view}"]`)?.classList.add("is-active");
   $("#viewTitle").textContent = viewTitles[view];
+  document.body.dataset.currentView = view;
 };
 
 const renderRoleHome = (): void => {
@@ -516,15 +517,13 @@ const renderConnectors = (): void => {
   $("#connectorGrid").innerHTML = integrations
     .map((item) => {
       const value = saved[item.id] || "";
-      const status = value ? "connected" : item.status;
       return `
         <article class="connector-card">
           <div class="section-head">
             <div>
-              <p class="eyebrow">${item.provider}</p>
               <h3>${item.name}</h3>
             </div>
-            <span class="status-pill status-${status === "connected" ? "connected" : "demo"}">${status}</span>
+            <span class="status-pill status-demo">Demo</span>
           </div>
           <p class="muted">${item.hint}</p>
           <label>
@@ -874,6 +873,7 @@ const bindEvents = (): void => {
   $("#generateDm").addEventListener("click", () => showToast("已生成英文 DM 草稿，等待 BD 确认后发送。"));
   $("#scoreCreative").addEventListener("click", () => showToast("素材评分已更新，高分素材进入投流池。"));
   $("#draftBudget").addEventListener("click", () => showToast("预算建议已进入 AI 确认中心，不会自动改广告预算。"));
+  $("#probeIntegrations").addEventListener("click", () => showToast("已进入连接准备流程。真实版会跳转官方授权页，Demo 不会写入真实密钥。"));
   $("#simulateSupportMessage").addEventListener("click", () => showToast("已模拟一条独立站客服消息进入队列，真实版需走渠道 webhook 和审计日志。"));
   $("#structureOrders").addEventListener("click", () => showToast("定制字段已结构化，异常订单进入客服队列。"));
   $("#approveAll").addEventListener("click", () => showToast("低风险动作已批准，高风险预算动作仍需老板确认。"));

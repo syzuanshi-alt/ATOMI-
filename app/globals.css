@@ -367,6 +367,10 @@ p {
   margin-bottom: 24px;
 }
 
+.app-shell.view-integrations .topbar {
+  display: none;
+}
+
 .topbar-actions {
   display: flex;
   align-items: center;
@@ -583,6 +587,29 @@ p {
   margin-bottom: 24px;
 }
 
+.integration-page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.integration-page-head p {
+  max-width: 720px;
+  margin: 8px 0 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.integration-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+}
+
 .data-table,
 .action-list,
 .approval-list,
@@ -627,6 +654,11 @@ p {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.connector-grid {
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
 .connector-card,
 .data-card,
 .creative-card,
@@ -636,6 +668,7 @@ p {
 }
 
 .connector-form {
+  width: 80%;
   margin-top: 16px;
 }
 
@@ -643,6 +676,24 @@ p {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 40px;
   gap: 8px;
+}
+
+.connector-card header {
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.connector-card h3 {
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+.connector-card .muted {
+  min-height: 40px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  line-height: 20px;
 }
 
 .status-pill,
@@ -671,9 +722,45 @@ p {
   margin-top: 24px;
 }
 
+.csv-upload-card {
+  display: block;
+  margin-top: 0;
+}
+
+.csv-upload-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.csv-upload-head p {
+  max-width: 720px;
+  margin: 8px 0 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.csv-upload-button {
+  min-width: 120px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .file-drop {
   display: grid;
-  min-height: 120px;
+  min-height: 128px;
   place-items: center;
   border: 1px dashed var(--border);
   border-radius: 8px;
@@ -691,6 +778,14 @@ p {
 
 .file-drop input {
   display: none;
+}
+
+.csv-upload-status {
+  margin-top: 16px;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 16px;
+  white-space: pre-wrap;
 }
 
 pre {
@@ -1088,9 +1183,21 @@ pre {
   }
 
   .topbar,
-  .section-head {
+  .section-head,
+  .integration-page-head,
+  .csv-upload-head {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .integration-actions {
+    width: 100%;
+  }
+
+  .integration-actions button,
+  .connector-form,
+  .csv-upload-button {
+    width: 100%;
   }
 
   .nav-list,

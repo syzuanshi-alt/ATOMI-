@@ -5,10 +5,8 @@ import {
   Bell,
   Bot,
   ChartNoAxesCombined,
-  ChevronRight,
   ClipboardCheck,
   Database,
-  FileUp,
   Gauge,
   Globe2,
   Handshake,
@@ -148,12 +146,12 @@ const roleConfigs: Record<
 };
 
 const providerPlaceholders: Record<Provider, string> = {
-  shopify: "store.myshopify.com",
-  meta_ads: "act_********",
-  tiktok_ads: "advertiser_id",
-  instagram_graph: "business account id",
-  logistics: "carrier api profile",
-  support: "gorgias / zendesk workspace",
+  shopify: "your-store.myshopify.com",
+  meta_ads: "act_1234567890",
+  tiktok_ads: "advertiser_id_123456",
+  instagram_graph: "instagram_business_account_id",
+  logistics: "carrier_profile_or_api_account",
+  support: "zendesk_or_gorgias_workspace",
   csv: "csv",
 };
 
@@ -305,7 +303,7 @@ export function GrowthApp({ initialSnapshot }: GrowthAppProps) {
   const [toast, setToast] = useState("");
   const [gdprIdentity, setGdprIdentity] = useState("");
   const [gdprMode, setGdprMode] = useState<"anonymize" | "delete">("anonymize");
-  const [csvPreview, setCsvPreview] = useState("等待上传...");
+  const [csvPreview, setCsvPreview] = useState("等待上传");
   const [selectedSupportThreadId, setSelectedSupportThreadId] = useState(supportThreads[0]?.id ?? "");
 
   const showToast = (message: string) => {
@@ -345,19 +343,6 @@ export function GrowthApp({ initialSnapshot }: GrowthAppProps) {
     showToast("经营快照已刷新。真实版会从队列同步平台数据。");
   };
 
-  const connectProvider = async (provider: Provider, accountRef: string) => {
-    const response = await fetch("/api/integrations", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...roleHeaders() },
-      body: JSON.stringify({ provider, accountRef }),
-    });
-    if (!response.ok) {
-      showToast("连接校验失败，请检查账号标识。");
-      return;
-    }
-    showToast("连接探测成功。真实密钥会由后端加密存储。");
-  };
-
   const decideAction = async (actionId: string, decision: "approved" | "rejected") => {
     const response = await fetch("/api/ai-actions", {
       method: "POST",
@@ -389,7 +374,7 @@ export function GrowthApp({ initialSnapshot }: GrowthAppProps) {
   };
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell view-${view}`}>
       <aside className="sidebar">
         <div className="brand-lockup">
           <div className="brand-mark">
@@ -577,10 +562,18 @@ export function GrowthApp({ initialSnapshot }: GrowthAppProps) {
 
         {view === "integrations" && (
           <>
-            <div className="section-head">
+            <div className="integration-page-head">
               <div>
-                <p className="eyebrow">真实模式准备区</p>
-                <h3>客户填入平台或账号数据即可替换 Demo 数据</h3>
+                <h2>数据接入</h2>
+                <p>连接跨境电商核心平台账号，先用 Demo 数据验证流程，再逐步替换为真实接口同步。</p>
+              </div>
+              <div className="integration-actions">
+                <button className="ghost-button" onClick={() => showToast("已进入连接准备流程。真实版会跳转官方授权页，Demo 不会写入真实密钥。")}>
+                  连接平台
+                </button>
+                <button className="primary-button" onClick={() => showToast("连接信息已保存到当前演示环境。真实版会写入后端加密存储。")}>
+                  保存连接
+                </button>
               </div>
             </div>
             <div className="connector-grid">
@@ -588,38 +581,42 @@ export function GrowthApp({ initialSnapshot }: GrowthAppProps) {
                 <article className="connector-card" key={item.id}>
                   <header>
                     <div>
-                      <p className="eyebrow">{item.provider}</p>
                       <h3>{item.name}</h3>
                     </div>
-                    <span className="status-pill status-demo">{item.status}</span>
+                    <span className="status-pill status-demo">Demo</span>
                   </header>
                   <p className="muted">{item.hint}</p>
-                  <ConnectForm provider={item.provider} placeholder={providerPlaceholders[item.provider]} onConnect={connectProvider} />
+                  <ConnectForm placeholder={providerPlaceholders[item.provider]} />
                 </article>
               ))}
             </div>
-            <section className="panel upload-panel">
-              <div>
-                <p className="eyebrow">无 API 时的过渡方案</p>
-                <h3>上传 CSV 先跑分析</h3>
-                <p className="muted">支持订单、广告、达人、素材四类 CSV 映射。正式 API 接入前，也能展示真实经营诊断。</p>
+            <section className="panel upload-panel csv-upload-card">
+              <div className="csv-upload-head">
+                <div>
+                  <h3>CSV 上传模块</h3>
+                  <p className="muted">无 API 权限时，先上传订单、广告、达人、素材 CSV 文件，完成字段映射和经营诊断。</p>
+                </div>
+                <label className="ghost-button csv-upload-button" htmlFor="csvInputNext">
+                  选择文件
+                </label>
               </div>
-              <label className="file-drop">
-                <FileUp />
-                <span>选择 CSV 文件</span>
-                <input
-                  type="file"
-                  accept=".csv"
-                  onChange={async (event) => {
-                    const file = event.target.files?.[0];
-                    if (!file) return;
-                    const text = await file.text();
-                    setCsvPreview(text.split(/\r?\n/).slice(0, 6).join("\n") || "CSV 为空");
-                    showToast("CSV 已读取，可进入字段映射与数据校验流程。");
-                  }}
-                />
+              <input
+                id="csvInputNext"
+                className="sr-only"
+                type="file"
+                accept=".csv"
+                onChange={async (event) => {
+                  const file = event.target.files?.[0];
+                  if (!file) return;
+                  const text = await file.text();
+                  setCsvPreview(text.split(/\r?\n/).slice(0, 6).join("\n") || "CSV 为空");
+                  showToast("CSV 已读取，可进入字段映射与数据校验流程。");
+                }}
+              />
+              <label className="file-drop" htmlFor="csvInputNext">
+                <span>拖拽 CSV 文件到这里，或点击右上角选择文件</span>
               </label>
-              <pre>{csvPreview}</pre>
+              <div className="csv-upload-status">{csvPreview}</div>
             </section>
           </>
         )}
@@ -1083,25 +1080,12 @@ export function GrowthApp({ initialSnapshot }: GrowthAppProps) {
   );
 }
 
-function ConnectForm({
-  provider,
-  placeholder,
-  onConnect,
-}: {
-  provider: Provider;
-  placeholder: string;
-  onConnect: (provider: Provider, accountRef: string) => void;
-}) {
+function ConnectForm({ placeholder }: { placeholder: string }) {
   const [value, setValue] = useState("");
   return (
     <label className="connector-form">
       <span>账号或连接标识</span>
-      <div>
-        <input value={value} onChange={(event) => setValue(event.target.value)} placeholder={placeholder} />
-        <button onClick={() => onConnect(provider, value)} type="button" aria-label="连接">
-          <ChevronRight size={18} />
-        </button>
-      </div>
+      <input value={value} onChange={(event) => setValue(event.target.value)} placeholder={placeholder} />
     </label>
   );
 }

@@ -18,12 +18,12 @@ export const getDemoSnapshot = (): GrowthSnapshot => ({
     { country: "FR", spendCents: 97000, revenueCents: 212000, grossProfitCents: 51000, cpaCents: 4380, roasBps: 21900 },
   ],
   integrations: [
-    { id: "shopify", provider: "shopify", name: "Shopify / 独立站", status: "demo", accountRef: null, lastSyncAt: null, hint: "订单、商品、客户、退款 webhook" },
-    { id: "meta", provider: "meta_ads", name: "Meta Ads", status: "demo", accountRef: null, lastSyncAt: null, hint: "广告花费、素材、国家、人群" },
-    { id: "tiktok", provider: "tiktok_ads", name: "TikTok Ads", status: "demo", accountRef: null, lastSyncAt: null, hint: "短视频投流与素材表现" },
-    { id: "instagram", provider: "instagram_graph", name: "Instagram Graph", status: "demo", accountRef: null, lastSyncAt: null, hint: "达人资料、互动、授权内容" },
-    { id: "logistics", provider: "logistics", name: "物流 API", status: "demo", accountRef: null, lastSyncAt: null, hint: "生产、发货、签收、异常轨迹" },
-    { id: "support", provider: "support", name: "客服系统", status: "demo", accountRef: null, lastSyncAt: null, hint: "定制确认、售后、满意度" },
+    { id: "shopify", provider: "shopify", name: "Shopify / 独立站", status: "demo", accountRef: null, lastSyncAt: null, hint: "同步订单、商品、客户、退款和店铺 webhook。" },
+    { id: "meta", provider: "meta_ads", name: "Meta Ads", status: "demo", accountRef: null, lastSyncAt: null, hint: "同步广告花费、素材、国家、人群和归因数据。" },
+    { id: "tiktok", provider: "tiktok_ads", name: "TikTok Ads", status: "demo", accountRef: null, lastSyncAt: null, hint: "同步短视频投流、广告组、素材表现和转化数据。" },
+    { id: "instagram", provider: "instagram_graph", name: "Instagram Graph", status: "demo", accountRef: null, lastSyncAt: null, hint: "同步达人资料、互动表现、授权内容和主页线索。" },
+    { id: "logistics", provider: "logistics", name: "物流 API", status: "demo", accountRef: null, lastSyncAt: null, hint: "同步生产、发货、签收、异常轨迹和售后预警。" },
+    { id: "support", provider: "support", name: "客服系统", status: "demo", accountRef: null, lastSyncAt: null, hint: "同步定制确认、售后消息、满意度和人工接管记录。" },
   ],
   creators: [
     { id: "cr_1", platform: "TikTok", handle: "@watchwithmia", country: "US", followers: 184000, avgViews: 52000, engagementRateBps: 684, aiScore: 92, status: "sample_sent", tags: ["gift guide", "couple", "custom watch"] },
