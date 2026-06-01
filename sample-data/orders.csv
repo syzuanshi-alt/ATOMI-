@@ -1,0 +1,4 @@
+external_order_id,country,channel,revenue_cents,gross_profit_cents,engraving,color,size,fulfillment_status
+AS-1028,US,Meta Ads,12900,4800,A+M 2026,Gold,42mm,custom_confirm
+AS-1034,CA,TikTok Creator,9900,3600,,Rose Gold,40mm,production
+AS-1041,UK,Organic TikTok,14900,5400,Forever,Black,40mm,shipped
