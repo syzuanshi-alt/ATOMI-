@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "verify:template": "node scripts/verify-template.mjs",
+    "smoke:integrations": "node scripts/smoke-integrations-api.mjs",
     "smoke:support": "node scripts/smoke-support-api.mjs",
     "db:schema:check": "node scripts/check-postgres-schema.mjs",
     "db:support:seed": "node scripts/seed-support-demo-data.mjs",
