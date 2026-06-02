@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server";
-import { getDemoRole } from "@/lib/auth";
+import { getRequestContext } from "@/lib/auth";
 import { rolePermissions } from "@/lib/permissions";
 
 export async function GET(request: Request) {
-  const role = getDemoRole(request);
+  const context = getRequestContext(request);
   return NextResponse.json({
-    role,
-    permissions: rolePermissions[role],
-    note: "Demo auth uses x-demo-role header or demo_role cookie. Replace with real session auth in production.",
+    mode: context.mode,
+    isDemo: context.isDemo,
+    tenantId: context.tenantId,
+    userId: context.userId,
+    actorRef: context.actorRef,
+    role: context.role,
+    authSource: context.authSource,
+    permissions: rolePermissions[context.role],
+    note: context.authNote,
   });
 }

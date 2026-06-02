@@ -3,22 +3,17 @@ import type {
   CustomerIdentity,
   HandoffReport,
   MessageTranslation,
-  Role,
   SupportChannel,
   SupportCustomer,
   SupportMessage,
   SupportRiskLevel,
   SupportThread,
 } from "@/lib/types";
+import type { AppRequestContext, RequestMode } from "@/lib/request-context";
 
-export type SupportRepositoryMode = "demo";
+export type SupportRepositoryMode = RequestMode;
 
-export type SupportActor = {
-  tenantId: string;
-  actorRef: string;
-  role: Role | "admin";
-  mode: SupportRepositoryMode;
-};
+export type SupportActor = AppRequestContext;
 
 export type SupportAuditAction =
   | "support.thread.list"

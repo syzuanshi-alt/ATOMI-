@@ -35,6 +35,26 @@ await check(
 );
 
 await check(
+  "当前请求上下文",
+  {
+    url: `${baseUrl}/api/me`,
+    method: "GET",
+    headers: { "x-demo-role": "support" },
+  },
+  (response, data) => ({
+    ok:
+      response.status === 200 &&
+      data?.mode === "demo" &&
+      data?.tenantId === "demo_tenant_atomi_watch" &&
+      data?.actorRef === "demo:support" &&
+      data?.authSource === "header" &&
+      Array.isArray(data?.permissions) &&
+      data.permissions.includes("support.reply"),
+    detail: `模式 ${data?.mode ?? "unknown"}，角色 ${data?.role ?? "unknown"}，来源 ${data?.authSource ?? "unknown"}`,
+  }),
+);
+
+await check(
   "统一客服会话列表",
   {
     url: `${baseUrl}/api/support/threads`,
