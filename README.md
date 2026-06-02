@@ -60,7 +60,7 @@ Then copy `.env.example` to `.env.local` and replace credentials.
 ```text
 SUPPORT_REPOSITORY_MODE=demo
 ENABLE_POSTGRES_SUPPORT_REPOSITORY=false
-DATABASE_URL=postgres://atomi:atomi@127.0.0.1:5432/atomi_growth
+DATABASE_URL=postgres://atomi:atomi@127.0.0.1:55432/atomi_growth
 ```
 
 小白团队先按这个规则理解：
@@ -104,6 +104,7 @@ npm run smoke:support:postgres
 - 不要把真实 `DATABASE_URL`、客户消息、邮箱、手机号写进 Git。
 - `next build` 不能依赖数据库是否启动；数据库连接必须懒加载。
 - 默认客服 API 仍使用 Demo Repository。PostgreSQL 沙箱只是验证数据库能力，不切正式模式。
+- 本项目本地 PostgreSQL 映射到 `127.0.0.1:55432`，避免和电脑上其他 PostgreSQL 项目抢占 `5432`。
 
 ## Included modules
 
