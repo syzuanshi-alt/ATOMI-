@@ -18,12 +18,12 @@ export const getDemoSnapshot = (): GrowthSnapshot => ({
     { country: "FR", spendCents: 97000, revenueCents: 212000, grossProfitCents: 51000, cpaCents: 4380, roasBps: 21900 },
   ],
   integrations: [
-    { id: "shopify", provider: "shopify", name: "Shopify / 独立站", status: "demo", accountRef: null, lastSyncAt: null, hint: "同步订单、商品、客户、退款和店铺 webhook。" },
-    { id: "meta", provider: "meta_ads", name: "Meta Ads", status: "demo", accountRef: null, lastSyncAt: null, hint: "同步广告花费、素材、国家、人群和归因数据。" },
-    { id: "tiktok", provider: "tiktok_ads", name: "TikTok Ads", status: "demo", accountRef: null, lastSyncAt: null, hint: "同步短视频投流、广告组、素材表现和转化数据。" },
-    { id: "instagram", provider: "instagram_graph", name: "Instagram Graph", status: "demo", accountRef: null, lastSyncAt: null, hint: "同步达人资料、互动表现、授权内容和主页线索。" },
-    { id: "logistics", provider: "logistics", name: "物流 API", status: "demo", accountRef: null, lastSyncAt: null, hint: "同步生产、发货、签收、异常轨迹和售后预警。" },
-    { id: "support", provider: "support", name: "客服系统", status: "demo", accountRef: null, lastSyncAt: null, hint: "同步定制确认、售后消息、满意度和人工接管记录。" },
+    { id: "shopify", provider: "shopify", name: "Shopify / 独立站", status: "demo", accountRef: null, lastSyncAt: null, hint: "接入店铺、商品、订单与客户基础数据，优先用于独立站业务验证。", inputLabel: "店铺域名" },
+    { id: "meta", provider: "meta_ads", name: "Meta Ads", status: "demo", accountRef: null, lastSyncAt: null, hint: "同步广告账户、花费、转化与素材表现，用于投流驾驶舱分析。", inputLabel: "广告账户 ID" },
+    { id: "tiktok", provider: "tiktok_ads", name: "TikTok Ads", status: "demo", accountRef: null, lastSyncAt: null, hint: "接入 TikTok 广告数据，监控短视频投流成本、转化与素材效率。", inputLabel: "Advertiser ID（广告主 ID）" },
+    { id: "instagram", provider: "instagram_graph", name: "Instagram Graph", status: "demo", accountRef: null, lastSyncAt: null, hint: "接入 Instagram 商业账号内容、互动与潜在客户线索数据。", inputLabel: "Business Account ID" },
+    { id: "logistics", provider: "logistics", name: "物流 API", status: "demo", accountRef: null, lastSyncAt: null, hint: "同步发货状态、轨迹节点、异常包裹与售后查询所需物流信息。", inputLabel: "物流账号 / API Profile" },
+    { id: "support", provider: "support", name: "客服系统", status: "demo", accountRef: null, lastSyncAt: null, hint: "接入独立站客服、邮件客服或第三方客服工作区，汇入统一客服台。", inputLabel: "客服工作区" },
   ],
   creators: [
     { id: "cr_1", platform: "TikTok", handle: "@watchwithmia", country: "US", followers: 184000, avgViews: 52000, engagementRateBps: 684, aiScore: 92, status: "sample_sent", tags: ["gift guide", "couple", "custom watch"] },

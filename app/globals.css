@@ -761,6 +761,7 @@ p {
 .file-drop {
   display: grid;
   min-height: 128px;
+  gap: 4px;
   place-items: center;
   border: 1px dashed var(--border);
   border-radius: 8px;
@@ -780,11 +781,18 @@ p {
   display: none;
 }
 
-.csv-upload-status {
-  margin-top: 16px;
+.file-drop small {
   color: var(--text-muted);
   font-size: 12px;
   line-height: 16px;
+}
+
+.csv-upload-status {
+  margin-top: 16px;
+  color: var(--warning);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
   white-space: pre-wrap;
 }
 
@@ -1014,6 +1022,13 @@ pre {
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 16px;
+}
+
+.support-status-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
 .message-box {

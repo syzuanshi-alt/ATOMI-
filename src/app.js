@@ -82,12 +82,12 @@ const roleConfigs = {
 };
 
 const integrations = [
-  { id: "shopify", provider: "shopify", name: "Shopify / 独立站", hint: "同步订单、商品、客户、退款和店铺 webhook。", status: "demo", placeholder: "your-store.myshopify.com" },
-  { id: "meta", provider: "meta_ads", name: "Meta Ads", hint: "同步广告花费、素材、国家、人群和归因数据。", status: "demo", placeholder: "act_1234567890" },
-  { id: "tiktok", provider: "tiktok_ads", name: "TikTok Ads", hint: "同步短视频投流、广告组、素材表现和转化数据。", status: "demo", placeholder: "advertiser_id_123456" },
-  { id: "instagram", provider: "instagram", name: "Instagram Graph", hint: "同步达人资料、互动表现、授权内容和主页线索。", status: "demo", placeholder: "instagram_business_account_id" },
-  { id: "logistics", provider: "logistics", name: "物流 API", hint: "同步生产、发货、签收、异常轨迹和售后预警。", status: "demo", placeholder: "carrier_profile_or_api_account" },
-  { id: "support", provider: "support", name: "客服系统", hint: "同步定制确认、售后消息、满意度和人工接管记录。", status: "demo", placeholder: "zendesk_or_gorgias_workspace" },
+  { id: "shopify", provider: "shopify", name: "Shopify / 独立站", hint: "接入店铺、商品、订单与客户基础数据，优先用于独立站业务验证。", status: "demo", inputLabel: "店铺域名", placeholder: "your-store.myshopify.com" },
+  { id: "meta", provider: "meta_ads", name: "Meta Ads", hint: "同步广告账户、花费、转化与素材表现，用于投流驾驶舱分析。", status: "demo", inputLabel: "广告账户 ID", placeholder: "act_1234567890" },
+  { id: "tiktok", provider: "tiktok_ads", name: "TikTok Ads", hint: "接入 TikTok 广告数据，监控短视频投流成本、转化与素材效率。", status: "demo", inputLabel: "Advertiser ID（广告主 ID）", placeholder: "advertiser_id_123456" },
+  { id: "instagram", provider: "instagram", name: "Instagram Graph", hint: "接入 Instagram 商业账号内容、互动与潜在客户线索数据。", status: "demo", inputLabel: "Business Account ID", placeholder: "instagram_business_account_id" },
+  { id: "logistics", provider: "logistics", name: "物流 API", hint: "同步发货状态、轨迹节点、异常包裹与售后查询所需物流信息。", status: "demo", inputLabel: "物流账号 / API Profile", placeholder: "carrier_profile_or_api_account" },
+  { id: "support", provider: "support", name: "客服系统", hint: "接入独立站客服、邮件客服或第三方客服工作区，汇入统一客服台。", status: "demo", inputLabel: "客服工作区", placeholder: "zendesk_or_gorgias_workspace" },
 ];
 
 const kpis = [
@@ -247,6 +247,12 @@ const supportThreads = [
   },
 ];
 
+const riskLabels = {
+  low: "低风险",
+  medium: "中风险",
+  high: "高风险",
+};
+
 const handoffItems = [
   { label: "离线会话", value: "14", detail: "独立站 8 条，邮件 4 条，表单 2 条" },
   { label: "潜在成交", value: "6", detail: "礼物刻字、德国配送、PayPal 咨询优先处理" },
@@ -359,9 +365,9 @@ const renderActions = () => {
       <article class="approval-card">
         <header>
           <strong>${item.title}</strong>
-          <span class="status-pill status-${item.risk === "low" ? "connected" : "demo"}">${item.owner}</span>
+          <span class="status-pill risk-${item.risk}">${riskLabels[item.risk]}</span>
         </header>
-        <p>${item.detail}</p>
+        <p>${item.owner} · ${item.detail}</p>
       </article>
     `,
     )
@@ -379,11 +385,11 @@ const renderConnectors = () => {
             <div>
               <h3>${item.name}</h3>
             </div>
-            <span class="status-pill status-demo">Demo</span>
+            <span class="status-pill status-${value ? "connected" : "demo"}">${value ? "已连接" : "Demo"}</span>
           </div>
           <p class="muted">${item.hint}</p>
           <label>
-            <span>账号或连接标识</span>
+            <span>${item.inputLabel}</span>
             <input data-integration="${item.id}" value="${value}" placeholder="${item.placeholder}" />
           </label>
         </article>
@@ -563,7 +569,6 @@ const renderAds = () => {
 const renderSupportHub = (threadId = selectedSupportThreadId) => {
   selectedSupportThreadId = threadId;
   const activeThread = supportThreads.find((item) => item.id === selectedSupportThreadId) || supportThreads[0];
-  const riskClass = activeThread.risk === "high" ? "error" : activeThread.risk === "low" ? "connected" : "demo";
 
   $("#supportOverview").innerHTML = handoffItems
     .map(
@@ -579,13 +584,12 @@ const renderSupportHub = (threadId = selectedSupportThreadId) => {
 
   $("#supportThreads").innerHTML = supportThreads
     .map((item) => {
-      const itemRiskClass = item.risk === "high" ? "error" : item.risk === "low" ? "connected" : "demo";
       return `
         <button class="support-thread-card ${item.id === activeThread.id ? "is-active" : ""}" data-support-thread="${item.id}">
           <span class="support-channel">${item.channel}</span>
           <strong>${item.customer}</strong>
           <small>${item.translated}</small>
-          <span class="status-pill status-${itemRiskClass}">${item.risk === "high" ? "高风险" : item.risk === "medium" ? "中风险" : "低风险"}</span>
+          <span class="status-pill risk-${item.risk}">${riskLabels[item.risk]}</span>
         </button>
       `;
     })
@@ -598,7 +602,10 @@ const renderSupportHub = (threadId = selectedSupportThreadId) => {
           <p class="eyebrow">${activeThread.channel} · ${activeThread.language}</p>
           <h3>${activeThread.customer}</h3>
         </div>
-        <span class="status-pill status-${riskClass}">${activeThread.status}</span>
+        <div class="support-status-stack">
+          <span class="status-pill status-demo">${activeThread.status}</span>
+          <span class="status-pill risk-${activeThread.risk}">${riskLabels[activeThread.risk]}</span>
+        </div>
       </header>
 
       <div class="message-box">
@@ -673,7 +680,7 @@ const renderApprovals = () => {
       <article class="approval-card">
         <header>
           <strong>${item.title}</strong>
-          <span class="status-pill status-${item.risk === "high" ? "error" : item.risk === "low" ? "connected" : "demo"}">${item.risk}</span>
+          <span class="status-pill risk-${item.risk}">${riskLabels[item.risk]}</span>
         </header>
         <p>${item.owner} · ${item.detail}</p>
         <footer>

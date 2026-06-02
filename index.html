@@ -140,25 +140,26 @@
           <div class="integration-page-head">
             <div>
               <h2>数据接入</h2>
-              <p>连接跨境电商核心平台账号，先用 Demo 数据验证流程，再逐步替换为真实接口同步。</p>
+              <p>连接跨境电商运营数据源，先用 Demo/模拟数据验证流程，再进入真实接口授权。</p>
             </div>
             <div class="integration-actions">
-              <button class="ghost-button" id="probeIntegrations">连接平台</button>
-              <button class="primary-button" id="saveIntegrations">保存连接</button>
+              <button class="primary-button" id="probeIntegrations">连接平台</button>
+              <button class="ghost-button" id="saveIntegrations">保存连接</button>
             </div>
           </div>
           <div class="connector-grid" id="connectorGrid"></div>
           <section class="panel upload-panel csv-upload-card">
             <div class="csv-upload-head">
               <div>
-                <h3>CSV 上传模块</h3>
-                <p class="muted">无 API 权限时，先上传订单、广告、达人、素材 CSV 文件，完成字段映射和经营诊断。</p>
+                <h3>CSV 数据上传</h3>
+                <p class="muted">用于前期没有接口权限时导入订单、广告、物流或客服历史数据，帮助快速跑通 Demo 流程。</p>
               </div>
               <label class="ghost-button csv-upload-button" for="csvInput">选择文件</label>
             </div>
             <input id="csvInput" class="sr-only" type="file" accept=".csv" />
             <label class="file-drop" for="csvInput">
               <span>拖拽 CSV 文件到这里，或点击右上角选择文件</span>
+              <small>支持订单、物流、广告、客服历史数据；真实客户资料上线前必须脱敏。</small>
             </label>
             <div id="csvPreview" class="csv-upload-status">等待上传</div>
           </section>

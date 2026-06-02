@@ -21,6 +21,7 @@ export type Integration = {
   accountRef: string | null;
   lastSyncAt: string | null;
   hint: string;
+  inputLabel: string;
 };
 
 export type MoneyCents = number;

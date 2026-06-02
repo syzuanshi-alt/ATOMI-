@@ -565,13 +565,13 @@ export function GrowthApp({ initialSnapshot }: GrowthAppProps) {
             <div className="integration-page-head">
               <div>
                 <h2>数据接入</h2>
-                <p>连接跨境电商核心平台账号，先用 Demo 数据验证流程，再逐步替换为真实接口同步。</p>
+                <p>连接跨境电商运营数据源，先用 Demo/模拟数据验证流程，再进入真实接口授权。</p>
               </div>
               <div className="integration-actions">
-                <button className="ghost-button" onClick={() => showToast("已进入连接准备流程。真实版会跳转官方授权页，Demo 不会写入真实密钥。")}>
+                <button className="primary-button" onClick={() => showToast("已进入连接准备流程。真实版会跳转官方授权页，Demo 不会写入真实密钥。")}>
                   连接平台
                 </button>
-                <button className="primary-button" onClick={() => showToast("连接信息已保存到当前演示环境。真实版会写入后端加密存储。")}>
+                <button className="ghost-button" onClick={() => showToast("连接信息已保存到当前演示环境。真实版会写入后端加密存储。")}>
                   保存连接
                 </button>
               </div>
@@ -583,18 +583,20 @@ export function GrowthApp({ initialSnapshot }: GrowthAppProps) {
                     <div>
                       <h3>{item.name}</h3>
                     </div>
-                    <span className="status-pill status-demo">Demo</span>
+                    <span className={`status-pill status-${item.accountRef ? "connected" : "demo"}`}>
+                      {item.accountRef ? "已连接" : "Demo"}
+                    </span>
                   </header>
                   <p className="muted">{item.hint}</p>
-                  <ConnectForm placeholder={providerPlaceholders[item.provider]} />
+                  <ConnectForm label={item.inputLabel} placeholder={providerPlaceholders[item.provider]} />
                 </article>
               ))}
             </div>
             <section className="panel upload-panel csv-upload-card">
               <div className="csv-upload-head">
                 <div>
-                  <h3>CSV 上传模块</h3>
-                  <p className="muted">无 API 权限时，先上传订单、广告、达人、素材 CSV 文件，完成字段映射和经营诊断。</p>
+                  <h3>CSV 数据上传</h3>
+                  <p className="muted">用于前期没有接口权限时导入订单、广告、物流或客服历史数据，帮助快速跑通 Demo 流程。</p>
                 </div>
                 <label className="ghost-button csv-upload-button" htmlFor="csvInputNext">
                   选择文件
@@ -615,6 +617,7 @@ export function GrowthApp({ initialSnapshot }: GrowthAppProps) {
               />
               <label className="file-drop" htmlFor="csvInputNext">
                 <span>拖拽 CSV 文件到这里，或点击右上角选择文件</span>
+                <small>支持订单、物流、广告、客服历史数据；真实客户资料上线前必须脱敏。</small>
               </label>
               <div className="csv-upload-status">{csvPreview}</div>
             </section>
@@ -1026,7 +1029,7 @@ export function GrowthApp({ initialSnapshot }: GrowthAppProps) {
                 <article className="approval-card" key={item.id}>
                   <header>
                     <strong>{item.title}</strong>
-                    <span className={`status-pill risk-${item.riskLevel}`}>{item.status}</span>
+                    <span className={`status-pill risk-${item.riskLevel}`}>{supportRiskLabel[item.riskLevel]}</span>
                   </header>
                   <p>{item.detail}</p>
                   <footer>
@@ -1080,11 +1083,11 @@ export function GrowthApp({ initialSnapshot }: GrowthAppProps) {
   );
 }
 
-function ConnectForm({ placeholder }: { placeholder: string }) {
+function ConnectForm({ label, placeholder }: { label: string; placeholder: string }) {
   const [value, setValue] = useState("");
   return (
     <label className="connector-form">
-      <span>账号或连接标识</span>
+      <span>{label}</span>
       <input value={value} onChange={(event) => setValue(event.target.value)} placeholder={placeholder} />
     </label>
   );
