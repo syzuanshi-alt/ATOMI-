@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requirePermission } from "@/lib/auth";
-import { getSupportActor, getSupportRepository } from "@/lib/repositories/support-repository";
+import { getSupportActor, getSupportRepository, withSupportRepositoryStatus } from "@/lib/repositories/support-repository";
 
 type ThreadRouteContext = {
   params: Promise<{
@@ -16,8 +16,8 @@ export async function GET(request: Request, context: ThreadRouteContext) {
   const result = await getSupportRepository().getThreadDetail(getSupportActor(request), threadId);
 
   if (!result) {
-    return NextResponse.json({ error: "Support thread not found" }, { status: 404 });
+    return NextResponse.json({ error: "support_thread_not_found", message: "客服会话不存在。" }, { status: 404 });
   }
 
-  return NextResponse.json(result);
+  return NextResponse.json(withSupportRepositoryStatus(result));
 }

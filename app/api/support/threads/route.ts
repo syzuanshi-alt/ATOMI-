@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requirePermission } from "@/lib/auth";
-import { getSupportActor, getSupportRepository } from "@/lib/repositories/support-repository";
+import { getSupportActor, getSupportRepository, withSupportRepositoryStatus } from "@/lib/repositories/support-repository";
 
 const inboundMessageSchema = z.object({
   channel: z.enum(["independent_site_chat", "independent_site_form", "email", "feishu"]),
@@ -17,7 +17,7 @@ export async function GET(request: Request) {
   if (forbidden) return forbidden;
 
   const result = await getSupportRepository().listThreads(getSupportActor(request));
-  return NextResponse.json(result);
+  return NextResponse.json(withSupportRepositoryStatus(result));
 }
 
 export async function POST(request: Request) {
@@ -30,5 +30,5 @@ export async function POST(request: Request) {
   }
 
   const result = await getSupportRepository().createInboundMessage(getSupportActor(request), body.data);
-  return NextResponse.json(result);
+  return NextResponse.json(withSupportRepositoryStatus(result));
 }

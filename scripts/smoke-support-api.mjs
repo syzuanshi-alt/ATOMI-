@@ -55,6 +55,24 @@ await check(
 );
 
 await check(
+  "客服 Repository 模式护栏",
+  {
+    url: `${baseUrl}/api/support/repository-status`,
+    method: "GET",
+    headers: { "x-demo-role": "support" },
+  },
+  (response, data) => ({
+    ok:
+      response.status === 200 &&
+      data?.requestedMode === "demo" &&
+      data?.activeMode === "demo" &&
+      typeof data?.databaseUrlConfigured === "boolean" &&
+      data?.postgresRepositoryEnabled === false,
+    detail: `请求模式 ${data?.requestedMode ?? "unknown"}，实际模式 ${data?.activeMode ?? "unknown"}`,
+  }),
+);
+
+await check(
   "统一客服会话列表",
   {
     url: `${baseUrl}/api/support/threads`,
@@ -68,8 +86,9 @@ await check(
       data.threads.length > 0 &&
       Array.isArray(data?.persistenceTargets) &&
       data.persistenceTargets.some((item) => item.table === "customer_threads") &&
-      Array.isArray(data?.auditEvents),
-    detail: `会话数 ${data?.threads?.length ?? 0}，持久化目标 ${data?.persistenceTargets?.length ?? 0}`,
+      Array.isArray(data?.auditEvents) &&
+      data?.repository?.activeMode === "demo",
+    detail: `会话数 ${data?.threads?.length ?? 0}，持久化目标 ${data?.persistenceTargets?.length ?? 0}，模式 ${data?.repository?.activeMode ?? "unknown"}`,
   }),
 );
 

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requirePermission } from "@/lib/auth";
-import { getSupportActor, getSupportRepository } from "@/lib/repositories/support-repository";
+import { getSupportActor, getSupportRepository, withSupportRepositoryStatus } from "@/lib/repositories/support-repository";
 
 const aiDraftSchema = z.object({
   threadId: z.string().min(2),
@@ -20,8 +20,8 @@ export async function POST(request: Request) {
   const result = await getSupportRepository().createAiDraft(getSupportActor(request), body.data);
 
   if (!result) {
-    return NextResponse.json({ error: "Support thread or message not found" }, { status: 404 });
+    return NextResponse.json({ error: "support_thread_or_message_not_found", message: "客服会话或消息不存在。" }, { status: 404 });
   }
 
-  return NextResponse.json(result);
+  return NextResponse.json(withSupportRepositoryStatus(result));
 }

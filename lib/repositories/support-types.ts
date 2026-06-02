@@ -10,9 +10,9 @@ import type {
   SupportRiskLevel,
   SupportThread,
 } from "@/lib/types";
-import type { AppRequestContext, RequestMode } from "@/lib/request-context";
+import type { AppRequestContext } from "@/lib/request-context";
 
-export type SupportRepositoryMode = RequestMode;
+export type SupportRepositoryMode = "demo" | "postgres";
 
 export type SupportActor = AppRequestContext;
 
@@ -92,7 +92,7 @@ export type SupportThreadDetailResult = {
 
 export type CreateInboundSupportMessageResult = {
   mode: SupportRepositoryMode;
-  persisted: false;
+  persisted: boolean;
   note: string;
   thread: SupportThread;
   message: SupportMessage;
@@ -103,7 +103,7 @@ export type CreateInboundSupportMessageResult = {
 
 export type CreateAiDraftResult = {
   mode: SupportRepositoryMode;
-  persisted: false;
+  persisted: boolean;
   note: string;
   draft: AiReplySuggestion;
   guardrail: string;
@@ -113,7 +113,7 @@ export type CreateAiDraftResult = {
 
 export type ReviewAiDraftResult = {
   mode: SupportRepositoryMode;
-  persisted: false;
+  persisted: boolean;
   note: string;
   draft: AiReplySuggestion;
   approval: AiApprovalRecord;

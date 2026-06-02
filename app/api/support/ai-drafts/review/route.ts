@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requirePermission } from "@/lib/auth";
-import { getSupportActor, getSupportRepository } from "@/lib/repositories/support-repository";
+import { getSupportActor, getSupportRepository, withSupportRepositoryStatus } from "@/lib/repositories/support-repository";
 
 const aiDraftReviewSchema = z.object({
   draftId: z.string().min(2),
@@ -29,5 +29,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "ai_reply_draft_not_found", message: "AI 回复草稿不存在。" }, { status: 404 });
   }
 
-  return NextResponse.json(result);
+  return NextResponse.json(withSupportRepositoryStatus(result));
 }

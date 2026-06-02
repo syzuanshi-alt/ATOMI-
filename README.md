@@ -51,6 +51,33 @@ docker compose up -d postgres redis
 
 Then copy `.env.example` to `.env.local` and replace credentials.
 
+## Repository mode guardrails（数据访问层模式护栏）
+
+当前客服消息中台默认使用 Demo Repository（演示数据访问层），不会连接真实数据库，也不会读取真实客户消息。
+
+环境变量：
+
+```text
+SUPPORT_REPOSITORY_MODE=demo
+ENABLE_POSTGRES_SUPPORT_REPOSITORY=false
+DATABASE_URL=postgres://atomi:atomi@127.0.0.1:5432/atomi_growth
+```
+
+小白团队先按这个规则理解：
+
+- `demo`：默认模式，使用内置模拟数据，适合演示和开发。
+- `postgres`：未来真实 PostgreSQL（数据库）模式，现在只做边界预留，仍会回退 Demo。
+- `DATABASE_URL`：数据库连接地址，真实值只能放 `.env.local` 或部署平台环境变量里，不能提交到 Git。
+- `ENABLE_POSTGRES_SUPPORT_REPOSITORY=true`：未来真正实现 PostgreSQL Repository 后才允许打开；当前仍是占位实现，不能用于生产。
+
+检查当前模式：
+
+```text
+GET http://127.0.0.1:4173/api/support/repository-status
+```
+
+如果误配置为 `SUPPORT_REPOSITORY_MODE=postgres`，系统会回退到 Demo Repository，并在接口返回里说明原因。这样可以避免页面直接崩掉，也能防止团队误以为已经接入真实数据库。
+
 ## Included modules
 
 - Demo Mode / Live Mode shell.
