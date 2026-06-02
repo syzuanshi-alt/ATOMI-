@@ -114,6 +114,21 @@ create table if not exists ai_reply_suggestions (
   risk_level text not null,
   reason text not null,
   status text not null default 'pending_review',
+  can_auto_send boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists ai_outputs (
+  id uuid primary key default uuid_generate_v4(),
+  tenant_id uuid not null references tenants(id),
+  source_type text not null,
+  source_id uuid,
+  model_name text not null,
+  prompt_hash text,
+  output_text text not null,
+  risk_level text,
+  status text not null default 'generated',
+  metadata jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now()
 );
 

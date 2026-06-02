@@ -1,0 +1,164 @@
+const baseUrl = process.env.SUPPORT_SMOKE_BASE_URL ?? "http://127.0.0.1:4173";
+
+const checks = [];
+
+const check = async (name, request, verify) => {
+  const response = await fetch(request.url, request);
+  const text = await response.text();
+  let data = null;
+
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = text;
+  }
+
+  const result = verify(response, data);
+  checks.push({ name, status: response.status, ok: result.ok, detail: result.detail });
+};
+
+const jsonHeaders = (role) => ({
+  "content-type": "application/json",
+  "x-demo-role": role,
+});
+
+await check(
+  "主页可打开",
+  {
+    url: `${baseUrl}/`,
+    method: "GET",
+  },
+  (response) => ({
+    ok: response.status === 200,
+    detail: response.status === 200 ? "主页返回 200" : `主页返回 ${response.status}`,
+  }),
+);
+
+await check(
+  "统一客服会话列表",
+  {
+    url: `${baseUrl}/api/support/threads`,
+    method: "GET",
+    headers: { "x-demo-role": "support" },
+  },
+  (response, data) => ({
+    ok:
+      response.status === 200 &&
+      Array.isArray(data?.threads) &&
+      data.threads.length > 0 &&
+      Array.isArray(data?.persistenceTargets) &&
+      data.persistenceTargets.some((item) => item.table === "customer_threads") &&
+      Array.isArray(data?.auditEvents),
+    detail: `会话数 ${data?.threads?.length ?? 0}，持久化目标 ${data?.persistenceTargets?.length ?? 0}`,
+  }),
+);
+
+await check(
+  "统一客服会话详情",
+  {
+    url: `${baseUrl}/api/support/threads/th_2`,
+    method: "GET",
+    headers: { "x-demo-role": "support" },
+  },
+  (response, data) => ({
+    ok:
+      response.status === 200 &&
+      data?.thread?.id === "th_2" &&
+      Array.isArray(data?.messages) &&
+      Array.isArray(data?.translations) &&
+      Array.isArray(data?.aiReplySuggestions),
+    detail: `消息 ${data?.messages?.length ?? 0}，AI 草稿 ${data?.aiReplySuggestions?.length ?? 0}`,
+  }),
+);
+
+await check(
+  "客服角色生成高风险 AI 草稿",
+  {
+    url: `${baseUrl}/api/support/ai-drafts`,
+    method: "POST",
+    headers: jsonHeaders("support"),
+    body: JSON.stringify({ threadId: "th_2", messageId: "msg_2" }),
+  },
+  (response, data) => ({
+    ok:
+      response.status === 200 &&
+      data?.draft?.riskLevel === "high" &&
+      data?.draft?.canAutoSend === false &&
+      Array.isArray(data?.auditEvents) &&
+      data.auditEvents.some((item) => item.persistenceTable === "audit_logs"),
+    detail: `风险 ${data?.draft?.riskLevel ?? "unknown"}，自动发送 ${String(data?.draft?.canAutoSend)}`,
+  }),
+);
+
+await check(
+  "老板角色不能生成客服草稿",
+  {
+    url: `${baseUrl}/api/support/ai-drafts`,
+    method: "POST",
+    headers: jsonHeaders("gm"),
+    body: JSON.stringify({ threadId: "th_2", messageId: "msg_2" }),
+  },
+  (response) => ({
+    ok: response.status === 403,
+    detail: response.status === 403 ? "权限拦截正常" : `预期 403，实际 ${response.status}`,
+  }),
+);
+
+await check(
+  "模拟新消息进入客服中台",
+  {
+    url: `${baseUrl}/api/support/threads`,
+    method: "POST",
+    headers: jsonHeaders("support"),
+    body: JSON.stringify({
+      channel: "independent_site_chat",
+      customerName: "演示客户",
+      externalUserId: "site_chat_demo_smoke",
+      originalText: "请问可以发加拿大吗？还能刻字吗？",
+      language: "zh-CN",
+    }),
+  },
+  (response, data) => ({
+    ok:
+      response.status === 200 &&
+      data?.persisted === false &&
+      data?.thread?.id &&
+      data?.message?.id &&
+      data?.draft?.id &&
+      Array.isArray(data?.persistenceTargets) &&
+      data.persistenceTargets.some((item) => item.table === "messages"),
+    detail: `Demo 临时会话 ${data?.thread?.id ?? "missing"}`,
+  }),
+);
+
+await check(
+  "离线托管日报",
+  {
+    url: `${baseUrl}/api/support/handoff-report`,
+    method: "GET",
+    headers: { "x-demo-role": "support" },
+  },
+  (response, data) => ({
+    ok:
+      response.status === 200 &&
+      Array.isArray(data?.reports) &&
+      data.reports.length > 0 &&
+      Array.isArray(data?.highRiskThreads) &&
+      Array.isArray(data?.needsHumanThreads),
+    detail: `日报 ${data?.reports?.length ?? 0}，高风险 ${data?.highRiskThreads?.length ?? 0}`,
+  }),
+);
+
+const failed = checks.filter((item) => !item.ok);
+
+for (const item of checks) {
+  const mark = item.ok ? "PASS" : "FAIL";
+  console.log(`${mark} ${item.name}: ${item.detail}`);
+}
+
+if (failed.length) {
+  console.error(`客服 API 烟测失败：${failed.length}/${checks.length}`);
+  process.exit(1);
+}
+
+console.log(`客服 API 烟测通过：${checks.length}/${checks.length}`);
