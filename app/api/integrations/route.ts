@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { callProvider } from "@/lib/connectors/base";
 import { requirePermission } from "@/lib/auth";
+import { query } from "@/lib/db";
 import { getDemoSnapshot } from "@/lib/demo-data";
-import type { Provider } from "@/lib/types";
+import { getSupportRepositoryStatus, withSupportRepositoryStatus } from "@/lib/repositories/support-repository";
+import type { IntegrationStatus, Provider } from "@/lib/types";
 
 type IntegrationReadiness = {
   placeholderExample: string;
@@ -19,6 +21,21 @@ const integrationSchema = z.object({
   provider: z.enum(["shopify", "meta_ads", "tiktok_ads", "instagram_graph", "logistics", "support", "csv"]),
   accountRef: z.string().min(2),
 });
+
+const POSTGRES_DEMO_TENANT_ID = "11111111-1111-4111-8111-111111111111";
+const providerOrder: Provider[] = ["shopify", "meta_ads", "tiktok_ads", "instagram_graph", "logistics", "support"];
+const providerSet = new Set<Provider>([...providerOrder, "csv"]);
+
+type IntegrationRow = {
+  id: string;
+  provider: string;
+  status: string;
+  accountRef: string | null;
+  lastSyncAt: Date | string | null;
+  hasEncryptedSecret: boolean;
+  rateLimitState: Record<string, unknown>;
+  circuitState: Record<string, unknown>;
+};
 
 const providerReadiness: Record<Provider, IntegrationReadiness> = {
   shopify: {
@@ -86,9 +103,142 @@ const providerReadiness: Record<Provider, IntegrationReadiness> = {
   },
 };
 
+const normalizeProvider = (provider: string): Provider | null => {
+  return providerSet.has(provider as Provider) ? (provider as Provider) : null;
+};
+
+const normalizeStatus = (status: string): IntegrationStatus => {
+  const allowedStatuses = new Set<IntegrationStatus>(["not_connected", "connected", "error", "rate_limited", "demo"]);
+  return allowedStatuses.has(status as IntegrationStatus) ? (status as IntegrationStatus) : "error";
+};
+
+const buildCsvUpload = (dataState: "demo" | "postgres_sandbox", dataStateLabelZh: string) => ({
+  enabled: true,
+  provider: "csv",
+  title: "CSV 上传（表格上传）",
+  status: "waiting_upload",
+  statusLabelZh: "等待上传",
+  dataState,
+  dataStateLabelZh,
+  acceptedFormats: [".csv"],
+  maxFileSizeMb: 10,
+  requiredColumns: ["数据类型", "业务日期", "订单号或素材 ID", "金额或状态字段"],
+  ...providerReadiness.csv,
+});
+
+const getIntegrationStaticInfo = (provider: Provider) => {
+  const snapshotIntegration = getDemoSnapshot().integrations.find((item) => item.provider === provider);
+  return {
+    name: snapshotIntegration?.name ?? provider,
+    hint: snapshotIntegration?.hint ?? "数据接入配置。",
+    inputLabel: snapshotIntegration?.inputLabel ?? "账号标识",
+  };
+};
+
+const readPostgresIntegrations = async () => {
+  const rows = await query<IntegrationRow>(
+    `
+      select
+        id::text as id,
+        provider,
+        status,
+        account_ref as "accountRef",
+        last_sync_at as "lastSyncAt",
+        encrypted_secret is not null as "hasEncryptedSecret",
+        rate_limit_state as "rateLimitState",
+        circuit_state as "circuitState"
+      from integrations
+      where tenant_id = $1
+      order by case provider
+        when 'shopify' then 1
+        when 'meta_ads' then 2
+        when 'tiktok_ads' then 3
+        when 'instagram_graph' then 4
+        when 'logistics' then 5
+        when 'support' then 6
+        else 99
+      end
+    `,
+    [POSTGRES_DEMO_TENANT_ID],
+  );
+
+  return rows
+    .map((row) => {
+      const provider = normalizeProvider(row.provider);
+      if (!provider || provider === "csv") {
+        return null;
+      }
+
+      return {
+        id: row.id,
+        provider,
+        ...getIntegrationStaticInfo(provider),
+        status: normalizeStatus(row.status),
+        statusLabelZh: "Demo 连接",
+        accountRef: row.accountRef,
+        lastSyncAt: row.lastSyncAt ? new Date(row.lastSyncAt).toISOString() : null,
+        hasEncryptedSecret: row.hasEncryptedSecret,
+        dataState: "postgres_sandbox" as const,
+        dataStateLabelZh: "PostgreSQL 沙箱数据",
+        rateLimitState: row.rateLimitState,
+        circuitState: row.circuitState,
+        ...providerReadiness[provider],
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => Boolean(item));
+};
+
 export async function GET(request: Request) {
   const forbidden = requirePermission(request, "integrations.manage");
   if (forbidden) return forbidden;
+
+  const repositoryStatus = getSupportRepositoryStatus();
+  if (repositoryStatus.activeMode === "postgres") {
+    const integrations = await readPostgresIntegrations();
+    const encryptedSecretCount = integrations.filter((integration) => integration.hasEncryptedSecret).length;
+
+    return NextResponse.json(
+      withSupportRepositoryStatus({
+        mode: "postgres",
+        source: "postgres_sandbox",
+        note: "数据接入配置来自本地 PostgreSQL 沙箱 integrations 表，只用于验证字段、状态和护栏，不读取真实平台，不保存真实密钥。",
+        summary: {
+          totalIntegrations: integrations.length,
+          demoConnections: integrations.filter((integration) => integration.status === "demo").length,
+          realConnections: 0,
+          csvUploadEnabled: true,
+          writableRealPlatforms: 0,
+          encryptedSecretCount,
+        },
+        integrations,
+        csvUpload: buildCsvUpload("postgres_sandbox", "PostgreSQL 沙箱数据"),
+        guardrails: {
+          noRealSecrets: true,
+          demoModeOnly: true,
+          noRealPlatformWrite: true,
+          noCustomerDataUpload: true,
+          officialApiOnlyForRealIntegrations: true,
+          manualReviewBeforeLiveMode: true,
+        },
+        auditEvents: [
+          {
+            id: `audit_integration_read_${Date.now()}`,
+            action: "integrations.read",
+            actorRef: "demo:admin",
+            result: "postgres_sandbox_read",
+            persistenceTable: "audit_logs",
+            note: "当前只返回接口审计事件，未写入真实生产审计。",
+            createdAt: new Date().toISOString(),
+          },
+        ],
+        nextActions: [
+          "先用 PostgreSQL 沙箱数据确认 6 个接入卡片的字段是否够用。",
+          "真实平台连接必须先准备密钥加密、同步日志、失败重试和人工审核。",
+          "当前接口不会读取 Shopify、Meta、TikTok、物流或客服平台的真实数据。",
+        ],
+      }),
+    );
+  }
 
   const snapshot = getDemoSnapshot();
   const integrations = snapshot.integrations.map((integration) => ({
@@ -101,6 +251,7 @@ export async function GET(request: Request) {
 
   return NextResponse.json({
     mode: "demo",
+    source: "demo_snapshot",
     note: "数据接入配置草案只用于准备字段和演示连接状态，不读取真实平台，不保存真实密钥。",
     summary: {
       totalIntegrations: integrations.length,
@@ -110,17 +261,7 @@ export async function GET(request: Request) {
       writableRealPlatforms: 0,
     },
     integrations,
-    csvUpload: {
-      enabled: true,
-      provider: "csv",
-      title: "CSV 上传（表格上传）",
-      status: "waiting_upload",
-      statusLabelZh: "等待上传",
-      acceptedFormats: [".csv"],
-      maxFileSizeMb: 10,
-      requiredColumns: ["数据类型", "业务日期", "订单号或素材 ID", "金额或状态字段"],
-      ...providerReadiness.csv,
-    },
+    csvUpload: buildCsvUpload("demo", "Demo 数据"),
     guardrails: {
       noRealSecrets: true,
       demoModeOnly: true,

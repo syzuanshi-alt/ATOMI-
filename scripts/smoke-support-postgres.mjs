@@ -48,6 +48,46 @@ try {
     return "错误 tenant_id 返回 0 条";
   });
 
+  await check("数据接入沙箱连接存在", async () => {
+    const result = await pool.query(
+      `
+        select provider, status, account_ref, encrypted_secret
+        from integrations
+        where tenant_id = $1
+        order by provider
+      `,
+      [DEMO_TENANT_ID],
+    );
+    const providers = result.rows.map((row) => row.provider);
+    const expectedProviders = ["instagram_graph", "logistics", "meta_ads", "shopify", "support", "tiktok_ads"];
+    if (result.rowCount !== expectedProviders.length) {
+      throw new Error(`期望 ${expectedProviders.length} 个数据接入沙箱连接，实际 ${result.rowCount}`);
+    }
+    if (providers.join(",") !== expectedProviders.join(",")) {
+      throw new Error(`数据接入 provider 不完整：${providers.join(",")}`);
+    }
+    if (!result.rows.every((row) => row.status === "demo" && row.account_ref?.startsWith("SANDBOX-"))) {
+      throw new Error("数据接入沙箱连接必须保持 demo 状态，并使用 SANDBOX 账号标识。");
+    }
+    return `连接 ${result.rowCount} 个：${providers.join(",")}`;
+  });
+
+  await check("数据接入沙箱没有真实密钥", async () => {
+    const result = await pool.query(
+      `
+        select count(*)::int as secret_count
+        from integrations
+        where tenant_id = $1
+          and encrypted_secret is not null
+      `,
+      [DEMO_TENANT_ID],
+    );
+    if (result.rows[0].secret_count !== 0) {
+      throw new Error(`发现 ${result.rows[0].secret_count} 个数据接入连接保存了密钥，沙箱不允许。`);
+    }
+    return "所有数据接入 encrypted_secret 均为空";
+  });
+
   await check("沙箱数据没有真实邮箱域名", async () => {
     const result = await pool.query(
       `

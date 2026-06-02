@@ -102,14 +102,16 @@ copy .env.example .env.local
 npm run db:schema:check
 npm run db:support:seed
 npm run smoke:support:postgres
+npm run smoke:integrations:postgres-api
 ```
 
 脚本说明：
 
 - `npm run db:schema:check`：执行并检查 `db/schema.sql`，确认关键表存在，客服表有 `tenant_id`。
 - `npm run db:support:seed`：重置 Demo 租户下的 AI 沙箱记录，并写入本地假租户、假客户、假客服会话、假 AI 草稿。
-- `npm run smoke:support:postgres`：按 `tenant_id` 查询沙箱客服数据，并检查没有真实邮箱域名。
+- `npm run smoke:support:postgres`：按 `tenant_id` 查询沙箱客服数据和数据接入沙箱连接，并检查没有真实邮箱域名或真实密钥。
 - `npm run smoke:integrations`：检查数据接入配置草案、CSV 上传配置和权限护栏。
+- `npm run smoke:integrations:postgres-api`：检查 PostgreSQL 模式下 `/api/integrations` 是否从本地沙箱表读取，并确认密钥不外露。
 - `npm run smoke:sync`：检查 Demo 同步任务护栏，确认排队不等于真实平台同步。
 
 注意：

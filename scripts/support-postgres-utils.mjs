@@ -91,6 +91,7 @@ export const requiredSupportTables = [
   "permissions",
   "role_permissions",
   "tenant_members",
+  "integrations",
   "support_channels",
   "customers",
   "customer_identities",

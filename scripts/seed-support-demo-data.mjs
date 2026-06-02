@@ -4,6 +4,12 @@ const ids = {
   permissionRead: "44444444-4444-4444-8444-444444444441",
   permissionReply: "44444444-4444-4444-8444-444444444442",
   permissionApprove: "44444444-4444-4444-8444-444444444443",
+  integrationShopify: "12121212-1212-4121-8121-121212121211",
+  integrationMetaAds: "12121212-1212-4121-8121-121212121212",
+  integrationTikTokAds: "12121212-1212-4121-8121-121212121213",
+  integrationInstagram: "12121212-1212-4121-8121-121212121214",
+  integrationLogistics: "12121212-1212-4121-8121-121212121215",
+  integrationSupport: "12121212-1212-4121-8121-121212121216",
   channelChat: "55555555-5555-4555-8555-555555555551",
   customerEmily: "66666666-6666-4666-8666-666666666661",
   customerLi: "66666666-6666-4666-8666-666666666662",
@@ -19,6 +25,7 @@ const ids = {
   approvalRefund: "cccccccc-cccc-4ccc-8ccc-ccccccccccc2",
   handoffReport: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
   auditSeed: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+  integrationAuditSeed: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeef",
 };
 
 try {
@@ -32,6 +39,7 @@ try {
     for (const table of resetTables) {
       await client.query(`delete from ${table} where tenant_id = $1`, [DEMO_TENANT_ID]);
     }
+    await client.query("delete from integrations where tenant_id = $1", [DEMO_TENANT_ID]);
 
     await client.query(
       `
@@ -102,6 +110,41 @@ try {
       `,
       [DEMO_TENANT_ID, DEMO_SUPPORT_USER_ID, DEMO_SUPPORT_ROLE_ID],
     );
+
+    const integrations = [
+      [ids.integrationShopify, "shopify", "SANDBOX-SHOPIFY-STORE"],
+      [ids.integrationMetaAds, "meta_ads", "SANDBOX-META-ADS"],
+      [ids.integrationTikTokAds, "tiktok_ads", "SANDBOX-TIKTOK-ADS"],
+      [ids.integrationInstagram, "instagram_graph", "SANDBOX-INSTAGRAM-GRAPH"],
+      [ids.integrationLogistics, "logistics", "SANDBOX-LOGISTICS"],
+      [ids.integrationSupport, "support", "SANDBOX-SUPPORT-WORKSPACE"],
+    ];
+
+    for (const integration of integrations) {
+      await client.query(
+        `
+          insert into integrations (
+            id, tenant_id, provider, status, account_ref, encrypted_secret, last_sync_at,
+            rate_limit_state, circuit_state
+          )
+          values (
+            $1, $2, $3, 'demo', $4, null, null,
+            '{"sandbox": true, "limit": 60, "windowMs": 60000}'::jsonb,
+            '{"sandbox": true, "failures": 0, "openedUntil": 0}'::jsonb
+          )
+          on conflict (id) do update
+          set provider = excluded.provider,
+              status = excluded.status,
+              account_ref = excluded.account_ref,
+              encrypted_secret = null,
+              last_sync_at = null,
+              rate_limit_state = excluded.rate_limit_state,
+              circuit_state = excluded.circuit_state,
+              updated_at = now()
+        `,
+        [integration[0], DEMO_TENANT_ID, integration[1], integration[2]],
+      );
+    }
 
     await client.query(
       `
@@ -301,6 +344,20 @@ try {
       [ids.auditSeed, DEMO_TENANT_ID],
     );
 
+    await client.query(
+      `
+        insert into audit_logs (id, tenant_id, actor, event, metadata)
+        values (
+          $1, $2, 'demo:admin', 'integrations.sandbox.seed',
+          '{"sandbox": true, "providers": ["shopify", "meta_ads", "tiktok_ads", "instagram_graph", "logistics", "support"], "note": "数据接入沙箱连接，不包含真实密钥。"}'::jsonb
+        )
+        on conflict (id) do update
+        set metadata = excluded.metadata,
+            created_at = now()
+      `,
+      [ids.integrationAuditSeed, DEMO_TENANT_ID],
+    );
+
     await client.query("commit");
   } catch (error) {
     await client.query("rollback");
@@ -312,6 +369,7 @@ try {
 console.log("本地 PostgreSQL 假客服数据写入完成。");
 console.log(`Demo tenant_id：${DEMO_TENANT_ID}`);
 console.log("已重置 Demo 租户下的 AI 草稿、AI 输出、审批和审计沙箱记录。");
+console.log("已写入 6 个数据接入沙箱连接，全部不包含真实密钥。");
 console.log("注意：这些都是 .test 邮箱和 SANDBOX 订单号，不是真实客户数据。");
   });
 } catch (error) {
