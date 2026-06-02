@@ -1,6 +1,7 @@
 import "server-only";
-import { query } from "@/lib/db";
+import { getDb, query } from "@/lib/db";
 import type {
+  AiApprovalRecord,
   AiReplySuggestion,
   CountryCode,
   CustomerIdentity,
@@ -20,6 +21,7 @@ import type {
   CreateInboundSupportMessageResult,
   HandoffReportResult,
   ReviewAiDraftResult,
+  ReviewAiDraftInput,
   SupportActor,
   SupportAuditAction,
   SupportAuditEvent,
@@ -49,6 +51,8 @@ const countries = ["US", "UK", "DE", "FR", "CA", "AU"] as const satisfies readon
 const messageDirections = ["inbound", "outbound"] as const satisfies readonly SupportMessageDirection[];
 const senderTypes = ["customer", "ai", "human", "system"] as const satisfies readonly SupportSenderType[];
 const draftStatuses = ["pending_review", "approved", "rejected", "sent"] as const;
+const approvalDecisions = ["approved", "rejected"] as const;
+const approvalSourceTypes = ["ai_reply_suggestion", "ai_action"] as const;
 
 type ThreadRow = {
   id: string;
@@ -112,6 +116,19 @@ type DraftRow = {
   createdAt: Date | string;
 };
 
+type ApprovalRow = {
+  id: string;
+  sourceType: string;
+  sourceId: string;
+  riskLevel: string;
+  decision: string;
+  approverRef: string | null;
+  finalText: string | null;
+  reviewNote: string | null;
+  humanEdited: boolean;
+  decidedAt: Date | string;
+};
+
 type HandoffReportRow = {
   id: string;
   reportDate: Date | string;
@@ -168,6 +185,14 @@ const asDraftStatus = (value: unknown): AiReplySuggestion["status"] => {
   return isOneOf(draftStatuses, value) ? value : "pending_review";
 };
 
+const asApprovalDecision = (value: unknown): AiApprovalRecord["decision"] => {
+  return isOneOf(approvalDecisions, value) ? value : "rejected";
+};
+
+const asApprovalSourceType = (value: unknown): AiApprovalRecord["sourceType"] => {
+  return isOneOf(approvalSourceTypes, value) ? value : "ai_reply_suggestion";
+};
+
 const resolveTenantId = (actor: SupportActor): string => {
   if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(actor.tenantId)) {
     return actor.tenantId;
@@ -183,7 +208,9 @@ const resolveTenantId = (actor: SupportActor): string => {
 const buildAuditEvent = (
   actor: SupportActor,
   action: SupportAuditAction,
-  target: Pick<SupportAuditEvent, "targetType" | "targetId" | "riskLevel" | "note">,
+  target: Pick<SupportAuditEvent, "targetType" | "targetId" | "riskLevel" | "note"> & {
+    result?: Extract<SupportAuditEvent["result"], "postgres_read" | "postgres_reviewed">;
+  },
 ): SupportAuditEvent => ({
   id: `audit_postgres_${action}_${Date.now()}`,
   tenantId: resolveTenantId(actor),
@@ -192,7 +219,7 @@ const buildAuditEvent = (
   targetType: target.targetType,
   targetId: target.targetId,
   riskLevel: target.riskLevel,
-  result: "postgres_read",
+  result: target.result ?? "postgres_read",
   note: target.note,
   persistenceTable: "audit_logs",
   createdAt: new Date().toISOString(),
@@ -260,6 +287,19 @@ const mapDraft = (row: DraftRow): AiReplySuggestion => ({
   createdAt: toIso(row.createdAt),
 });
 
+const mapApproval = (row: ApprovalRow): AiApprovalRecord => ({
+  id: row.id,
+  sourceType: asApprovalSourceType(row.sourceType),
+  sourceId: row.sourceId,
+  riskLevel: asRiskLevel(row.riskLevel),
+  decision: asApprovalDecision(row.decision),
+  approverRef: row.approverRef ?? "unknown_actor",
+  finalText: row.finalText,
+  reviewNote: row.reviewNote,
+  humanEdited: row.humanEdited,
+  decidedAt: toIso(row.decidedAt),
+});
+
 const getSummaryText = (summary: unknown): string => {
   if (summary && typeof summary === "object" && "summary" in summary) {
     const text = (summary as { summary?: unknown }).summary;
@@ -283,7 +323,7 @@ const getPriorityThreads = (summary: unknown, fallbackThreads: SupportThread[]):
 };
 
 const readOnlyBlocked = async (): Promise<never> => {
-  throw new Error("PostgreSQL Repository 第一版仅支持只读查询。写入消息、生成草稿、审核草稿暂时必须继续使用 Demo 模式。");
+  throw new Error("PostgreSQL Repository 当前只允许读取和审核已有 AI 草稿。写入客户消息、生成新草稿暂时必须继续使用 Demo 模式。");
 };
 
 const listThreadRows = async (tenantId: string): Promise<ThreadRow[]> => {
@@ -496,8 +536,151 @@ export const postgresSupportRepository: SupportRepository = {
     return readOnlyBlocked();
   },
 
-  async reviewAiDraft(): Promise<ReviewAiDraftResult | null> {
-    return readOnlyBlocked();
+  async reviewAiDraft(actor: SupportActor, input: ReviewAiDraftInput): Promise<ReviewAiDraftResult | null> {
+    const tenantId = resolveTenantId(actor);
+    const client = await getDb().connect();
+
+    try {
+      await client.query("begin");
+
+      const draftResult = await client.query<DraftRow>(
+        `
+          select
+            id::text as "id",
+            thread_id::text as "threadId",
+            message_id::text as "messageId",
+            draft_text as "draftText",
+            risk_level as "riskLevel",
+            reason,
+            status,
+            can_auto_send as "canAutoSend",
+            created_at as "createdAt"
+          from ai_reply_suggestions
+          where tenant_id = $1
+            and id = $2
+          for update
+        `,
+        [tenantId, input.draftId],
+      );
+
+      const originalDraft = draftResult.rows[0] ? mapDraft(draftResult.rows[0]) : null;
+      if (!originalDraft) {
+        await client.query("rollback");
+        return null;
+      }
+
+      const finalText = input.decision === "approved" ? input.finalText?.trim() || originalDraft.draftText : null;
+      const humanEdited =
+        input.humanEdited ??
+        Boolean(finalText && finalText.trim() !== originalDraft.draftText.trim());
+      const reviewNote = input.reviewNote?.trim() || null;
+
+      const updatedDraftResult = await client.query<DraftRow>(
+        `
+          update ai_reply_suggestions
+          set status = $3
+          where tenant_id = $1
+            and id = $2
+          returning
+            id::text as "id",
+            thread_id::text as "threadId",
+            message_id::text as "messageId",
+            draft_text as "draftText",
+            risk_level as "riskLevel",
+            reason,
+            status,
+            can_auto_send as "canAutoSend",
+            created_at as "createdAt"
+        `,
+        [tenantId, input.draftId, input.decision],
+      );
+      const updatedDraft = mapDraft(updatedDraftResult.rows[0]);
+
+      const approvalResult = await client.query<ApprovalRow>(
+        `
+          insert into ai_approvals (
+            tenant_id, source_type, source_id, risk_level, decision,
+            approver_ref, final_text, review_note, human_edited
+          )
+          values ($1, 'ai_reply_suggestion', $2, $3, $4, $5, $6, $7, $8)
+          returning
+            id::text as "id",
+            source_type as "sourceType",
+            source_id::text as "sourceId",
+            risk_level as "riskLevel",
+            decision,
+            approver_ref as "approverRef",
+            final_text as "finalText",
+            review_note as "reviewNote",
+            human_edited as "humanEdited",
+            decided_at as "decidedAt"
+        `,
+        [
+          tenantId,
+          updatedDraft.id,
+          updatedDraft.riskLevel,
+          input.decision,
+          actor.actorRef,
+          finalText,
+          reviewNote,
+          humanEdited,
+        ],
+      );
+      const approval = mapApproval(approvalResult.rows[0]);
+
+      await client.query(
+        `
+          insert into audit_logs (tenant_id, actor, event, metadata)
+          values ($1, $2, 'support.ai_draft.review', $3::jsonb)
+        `,
+        [
+          tenantId,
+          actor.actorRef,
+          JSON.stringify({
+            source: "postgres_support_repository",
+            sourceType: approval.sourceType,
+            sourceId: approval.sourceId,
+            approvalId: approval.id,
+            decision: approval.decision,
+            riskLevel: approval.riskLevel,
+            humanEdited: approval.humanEdited,
+            canAutoSend: updatedDraft.canAutoSend,
+            note: "本地 PostgreSQL 沙箱审核记录，不代表已经发送客户消息。",
+          }),
+        ],
+      );
+
+      await client.query("commit");
+
+      return {
+        mode: "postgres",
+        persisted: true,
+        note: "AI 草稿审核已写入本地 PostgreSQL 沙箱。审核通过不代表已经发送客户消息。",
+        draft: updatedDraft,
+        approval,
+        guardrail:
+          input.decision === "rejected"
+            ? "已写入人工驳回记录。该 AI 草稿不能发送。"
+            : updatedDraft.canAutoSend
+              ? "已写入人工确认记录。低风险草稿后续可进入发送候选，但当前接口不会发送客户消息。"
+              : "已写入人工确认记录。中高风险草稿仍不能自动发送，真实发送必须另走人工发送接口。",
+        persistenceTargets: supportPersistenceTargets,
+        auditEvents: [
+          buildAuditEvent(actor, "support.ai_draft.review", {
+            targetType: "ai_approval",
+            targetId: approval.id,
+            riskLevel: approval.riskLevel,
+            result: "postgres_reviewed",
+            note: "PostgreSQL 沙箱已更新 ai_reply_suggestions，写入 ai_approvals 和 audit_logs；未发送客户消息。",
+          }),
+        ],
+      };
+    } catch (error) {
+      await client.query("rollback");
+      throw error;
+    } finally {
+      client.release();
+    }
   },
 
   async getHandoffReport(actor: SupportActor): Promise<HandoffReportResult> {

@@ -81,7 +81,7 @@ export const getSupportRepositoryStatus = (): SupportRepositoryStatus => {
       databaseUrlConfigured,
       postgresRepositoryEnabled,
       fallbackReason: null,
-      warning: "PostgreSQL Repository 第一版只支持只读查询；写入消息、AI 草稿生成和审核仍需回到 Demo 模式或等待下一阶段实现。",
+      warning: "PostgreSQL Repository 当前支持读取和审核已有 AI 草稿；写入客户消息、生成新草稿、发送客户消息仍需等待下一阶段实现。",
       envKeys: ["SUPPORT_REPOSITORY_MODE", "DATABASE_URL", "ENABLE_POSTGRES_SUPPORT_REPOSITORY"],
     };
   }

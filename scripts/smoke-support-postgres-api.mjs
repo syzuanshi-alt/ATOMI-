@@ -1,3 +1,5 @@
+import { DEMO_TENANT_ID, withPostgres } from "./support-postgres-utils.mjs";
+
 const baseUrl = process.env.SUPPORT_POSTGRES_API_BASE_URL ?? "http://127.0.0.1:4174";
 
 const checks = [];
@@ -16,6 +18,15 @@ const check = async (name, request, verify) => {
   const result = verify(response, data);
   checks.push({ name, status: response.status, ok: result.ok, detail: result.detail, data });
   return data;
+};
+
+const checkDb = async (name, run) => {
+  try {
+    const detail = await run();
+    checks.push({ name, status: "db", ok: true, detail, data: null });
+  } catch (error) {
+    checks.push({ name, status: "db", ok: false, detail: error instanceof Error ? error.message : String(error), data: null });
+  }
 };
 
 const supportHeaders = {
@@ -109,6 +120,79 @@ await check(
     detail: `日报 ${data?.reports?.length ?? 0}，高风险 ${data?.highRiskThreads?.length ?? 0}`,
   }),
 );
+
+const reviewDraftId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2";
+const reviewNote = `PostgreSQL API 烟测驳回记录 ${Date.now()}`;
+
+const reviewData = await check(
+  "PostgreSQL AI 草稿审核落库 API",
+  {
+    url: `${baseUrl}/api/support/ai-drafts/review`,
+    method: "POST",
+    headers: jsonHeaders,
+    body: JSON.stringify({
+      draftId: reviewDraftId,
+      decision: "rejected",
+      reviewNote,
+    }),
+  },
+  (response, data) => ({
+    ok:
+      response.status === 200 &&
+      data?.mode === "postgres" &&
+      data?.persisted === true &&
+      data?.draft?.id === reviewDraftId &&
+      data?.draft?.status === "rejected" &&
+      data?.approval?.decision === "rejected" &&
+      data?.approval?.sourceId === reviewDraftId &&
+      data?.approval?.reviewNote === reviewNote &&
+      Array.isArray(data?.auditEvents) &&
+      data.auditEvents.some((item) => item.action === "support.ai_draft.review" && item.result === "postgres_reviewed"),
+    detail: `审核 ${data?.approval?.decision ?? "unknown"}，草稿状态 ${data?.draft?.status ?? "unknown"}，落库 ${String(data?.persisted)}`,
+  }),
+);
+
+await checkDb("PostgreSQL AI 审核记录真实入库", async () => {
+  const approvalId = reviewData?.approval?.id;
+  if (!approvalId) {
+    throw new Error("缺少审批 ID，无法核对数据库入库结果。");
+  }
+
+  return withPostgres(async (pool) => {
+    const result = await pool.query(
+      `
+        select
+          (select status from ai_reply_suggestions where tenant_id = $1 and id::text = $2) as draft_status,
+          (
+            select count(*)::int
+            from ai_approvals
+            where tenant_id = $1
+              and id::text = $3
+              and source_id::text = $2
+              and decision = 'rejected'
+              and review_note = $4
+          ) as approvals_count,
+          (
+            select count(*)::int
+            from audit_logs
+            where tenant_id = $1
+              and event = 'support.ai_draft.review'
+              and metadata->>'approvalId' = $3
+          ) as audit_count
+      `,
+      [DEMO_TENANT_ID, reviewDraftId, approvalId, reviewNote],
+    );
+
+    const row = result.rows[0];
+    if (row.draft_status !== "rejected" || row.approvals_count !== 1 || row.audit_count !== 1) {
+      throw new Error(
+        `审核入库不完整：draft_status=${row.draft_status}, approvals=${row.approvals_count}, audits=${row.audit_count}`,
+      );
+    }
+
+    return `草稿 ${row.draft_status}，审批 ${row.approvals_count}，审计 ${row.audit_count}`;
+  });
+});
 
 await check(
   "PostgreSQL 只读模式阻断写入",
