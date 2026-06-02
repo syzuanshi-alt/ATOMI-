@@ -202,6 +202,70 @@ await checkDb("PostgreSQL AI 草稿生成记录真实入库", async () => {
   });
 });
 
+await check(
+  "PostgreSQL 发送前置护栏阻断未审核草稿",
+  {
+    url: `${baseUrl}/api/support/replies/send`,
+    method: "POST",
+    headers: jsonHeaders,
+    body: JSON.stringify({
+      draftId: generatedDraftData?.draft?.id ?? "missing_draft",
+    }),
+  },
+  (response, data) => ({
+    ok:
+      response.status === 409 &&
+      data?.error === "support_reply_send_blocked" &&
+      data?.mode === "postgres" &&
+      data?.persisted === true &&
+      data?.sendAttempted === false &&
+      data?.guardrails?.noCustomerMessageSent === true &&
+      Array.isArray(data?.blockedReasons) &&
+      data.blockedReasons.includes("requires_human_approval") &&
+      data.blockedReasons.includes("medium_high_risk_manual_only") &&
+      Array.isArray(data?.auditEvents) &&
+      data.auditEvents.some((item) => item.action === "support.reply_send.guard" && item.result === "blocked"),
+    detail: `状态 ${response.status}，阻断 ${data?.blockedReasons?.join(",") ?? "none"}，已发送 ${String(data?.sendAttempted)}`,
+  }),
+);
+
+await checkDb("PostgreSQL 发送前置护栏只写审计不发消息", async () => {
+  const draftId = generatedDraftData?.draft?.id;
+  if (!draftId) {
+    throw new Error("缺少生成草稿 ID，无法核对发送护栏审计。");
+  }
+
+  return withPostgres(async (pool) => {
+    const result = await pool.query(
+      `
+        select
+          (
+            select count(*)::int
+            from audit_logs
+            where tenant_id = $1
+              and event = 'support.reply_send.guard'
+              and metadata->>'draftId' = $2
+              and metadata->>'sendAttempted' = 'false'
+          ) as audit_count,
+          (
+            select count(*)::int
+            from ai_autoreplies
+            where tenant_id = $1
+              and message_id::text = $3
+          ) as autoreplies_count
+      `,
+      [DEMO_TENANT_ID, draftId, messageShippingId],
+    );
+
+    const row = result.rows[0];
+    if (row.audit_count !== 1 || row.autoreplies_count !== 0) {
+      throw new Error(`发送护栏异常：audits=${row.audit_count}, autoreplies=${row.autoreplies_count}`);
+    }
+
+    return `审计 ${row.audit_count}，自动发送 ${row.autoreplies_count}`;
+  });
+});
+
 const reviewDraftId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2";
 const reviewNote = `PostgreSQL API 烟测驳回记录 ${Date.now()}`;
 

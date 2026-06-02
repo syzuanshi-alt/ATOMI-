@@ -84,9 +84,10 @@ PostgreSQL 当前只支持低风险沙箱能力：
 - 可以读取：AI 客服托管闭环汇总，用于检查会话、草稿、审批、审计和日报是否完整。
 - 可以写入：生成沙箱 AI 草稿，写入 `ai_reply_suggestions`、`ai_outputs` 和 `audit_logs`。
 - 可以写入：审核已有 AI 草稿，写入 `ai_approvals` 和 `audit_logs`。
+- 可以写入：客服回复发送前置护栏审计，证明当前只检查、不发送客户消息。
 - 暂不支持：模拟新消息写入、真实客户回复发送。
 - 客户消息写入接口在 PostgreSQL 模式下会返回 `409`，提示当前阶段不允许。
-- AI 草稿生成只用本地规则沙箱，不调用真实大模型，也不会发送客户消息。
+- AI 草稿生成和发送前置检查只用本地规则沙箱，不调用真实大模型，也不会发送客户消息。
 
 ## Local PostgreSQL sandbox（本地数据库沙箱）
 
@@ -142,7 +143,7 @@ npm run smoke:support:postgres-api
 必须看到：
 
 ```text
-PostgreSQL API 烟测通过：11/11
+PostgreSQL API 烟测通过：13/13
 ```
 
 测试完成后关闭 `4174` 端口的临时服务。不要把 `.env.local` 默认改成 PostgreSQL 模式，避免团队误把本地假数据库当成真实平台。生成草稿、审核通过或驳回都不代表已经发送客户消息。

@@ -7,7 +7,9 @@ import type {
   CreateAiDraftResult,
   CreateInboundSupportMessageInput,
   CreateInboundSupportMessageResult,
+  EvaluateReplySendInput,
   HandoffReportResult,
+  ReplySendGuardResult,
   ReviewAiDraftInput,
   ReviewAiDraftResult,
   SupportActor,
@@ -79,6 +81,63 @@ const applyDraftReview = (
     guardrail: draft.canAutoSend
       ? "已记录人工确认。低风险草稿可进入发送候选，但 Demo 模式不会真正发送客户消息。"
       : "已记录人工确认。中高风险草稿仍然不能自动发送，真实发送前必须走人工发送接口和审计日志。",
+  };
+};
+
+const buildReplySendGuard = (
+  actor: SupportActor,
+  draft: AiReplySuggestion,
+  approval: AiApprovalRecord | null,
+  persisted: boolean,
+): ReplySendGuardResult => {
+  const humanApprovalFound = draft.status === "approved" || approval?.decision === "approved";
+  const draftRejected = draft.status === "rejected" || approval?.decision === "rejected";
+  const mediumHighRiskManualOnly = draft.riskLevel !== "low";
+  const blockedReasons = [
+    ...(!humanApprovalFound ? ["requires_human_approval"] : []),
+    ...(draftRejected ? ["draft_rejected"] : []),
+    ...(mediumHighRiskManualOnly && !humanApprovalFound ? ["medium_high_risk_manual_only"] : []),
+  ];
+  const eligibleForManualSend = humanApprovalFound && !draftRejected;
+  const auditEvent = buildAuditEvent(actor, "support.reply_send.guard", {
+    targetType: "ai_reply_suggestion",
+    targetId: draft.id,
+    riskLevel: draft.riskLevel,
+    result: "blocked",
+    note: eligibleForManualSend
+      ? "发送前置检查通过，但当前发送适配器关闭；未发送客户消息。"
+      : "发送前置检查未通过；未发送客户消息。",
+  });
+
+  return {
+    mode: "demo",
+    persisted,
+    note: eligibleForManualSend
+      ? "发送前置检查通过。当前仍为沙箱护栏，只进入人工发送候选，不发送客户消息。"
+      : "发送前置检查未通过。当前接口只做护栏判断，不发送客户消息。",
+    draft,
+    approval,
+    sendAttempted: false,
+    eligibleForManualSend,
+    sendAdapterEnabled: false,
+    blockedReasons,
+    requiredChecks: {
+      draftExists: true,
+      humanApprovalFound,
+      draftNotRejected: !draftRejected,
+      mediumHighRiskManualOnly,
+      sendAdapterEnabled: false,
+      noRealCustomerMessageSent: true,
+    },
+    guardrails: {
+      noCustomerMessageSent: true,
+      noRealPlatformConnected: true,
+      highRiskAutoSendBlocked: true,
+      sendAdapterDisabled: true,
+      auditRequired: true,
+    },
+    persistenceTargets: supportPersistenceTargets,
+    auditEvents: [auditEvent],
   };
 };
 
@@ -269,6 +328,22 @@ export const demoSupportRepository: SupportRepository = {
         }),
       ],
     };
+  },
+
+  async evaluateReplySendGuard(actor: SupportActor, input: EvaluateReplySendInput): Promise<ReplySendGuardResult | null> {
+    const snapshot = getDemoSnapshot();
+    const draft = snapshot.aiReplySuggestions.find((item) => item.id === input.draftId);
+
+    if (!draft) {
+      return null;
+    }
+
+    const approvals = snapshot.aiApprovals
+      .filter((item) => item.sourceType === "ai_reply_suggestion" && item.sourceId === draft.id)
+      .sort((a, b) => Date.parse(b.decidedAt) - Date.parse(a.decidedAt));
+    const approval = approvals[0] ?? null;
+
+    return buildReplySendGuard(actor, draft, approval, false);
   },
 
   async getHandoffReport(actor: SupportActor): Promise<HandoffReportResult> {

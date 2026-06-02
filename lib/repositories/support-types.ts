@@ -22,6 +22,7 @@ export type SupportAuditAction =
   | "support.message.ingest"
   | "support.ai_draft.generate"
   | "support.ai_draft.review"
+  | "support.reply_send.guard"
   | "support.handoff_report.read";
 
 export type SupportAuditEvent = {
@@ -74,6 +75,11 @@ export type ReviewAiDraftInput = {
   finalText?: string;
   reviewNote?: string;
   humanEdited?: boolean;
+};
+
+export type EvaluateReplySendInput = {
+  draftId: string;
+  finalText?: string;
 };
 
 export type SupportThreadListResult = {
@@ -133,6 +139,35 @@ export type ReviewAiDraftResult = {
   auditEvents: SupportAuditEvent[];
 };
 
+export type ReplySendGuardResult = {
+  mode: SupportRepositoryMode;
+  persisted: boolean;
+  note: string;
+  draft: AiReplySuggestion;
+  approval: AiApprovalRecord | null;
+  sendAttempted: false;
+  eligibleForManualSend: boolean;
+  sendAdapterEnabled: false;
+  blockedReasons: string[];
+  requiredChecks: {
+    draftExists: true;
+    humanApprovalFound: boolean;
+    draftNotRejected: boolean;
+    mediumHighRiskManualOnly: boolean;
+    sendAdapterEnabled: false;
+    noRealCustomerMessageSent: true;
+  };
+  guardrails: {
+    noCustomerMessageSent: true;
+    noRealPlatformConnected: true;
+    highRiskAutoSendBlocked: true;
+    sendAdapterDisabled: true;
+    auditRequired: true;
+  };
+  persistenceTargets: SupportPersistenceTarget[];
+  auditEvents: SupportAuditEvent[];
+};
+
 export type HandoffReportResult = {
   mode: SupportRepositoryMode;
   note: string;
@@ -149,6 +184,7 @@ export type SupportRepository = {
   createInboundMessage(actor: SupportActor, input: CreateInboundSupportMessageInput): Promise<CreateInboundSupportMessageResult>;
   createAiDraft(actor: SupportActor, input: CreateAiDraftInput): Promise<CreateAiDraftResult | null>;
   reviewAiDraft(actor: SupportActor, input: ReviewAiDraftInput): Promise<ReviewAiDraftResult | null>;
+  evaluateReplySendGuard(actor: SupportActor, input: EvaluateReplySendInput): Promise<ReplySendGuardResult | null>;
   getHandoffReport(actor: SupportActor): Promise<HandoffReportResult>;
 };
 
@@ -198,13 +234,13 @@ export const supportPersistenceTargets: SupportPersistenceTarget[] = [
   {
     table: "ai_reply_suggestions",
     purpose: "保存 AI 回复草稿、风险等级、原因、状态和是否允许低风险托管候选。",
-    usedByApis: ["GET /api/support/threads/[threadId]", "POST /api/support/threads", "POST /api/support/ai-drafts", "POST /api/support/ai-drafts/review"],
+    usedByApis: ["GET /api/support/threads/[threadId]", "POST /api/support/threads", "POST /api/support/ai-drafts", "POST /api/support/ai-drafts/review", "POST /api/support/replies/send"],
     requiredForLiveMode: true,
   },
   {
     table: "ai_autoreplies",
     purpose: "只记录真正由 AI 托管发送的低风险回复；中高风险必须 blocked。",
-    usedByApis: ["POST /api/support/ai-drafts"],
+    usedByApis: ["POST /api/support/ai-drafts", "POST /api/support/replies/send"],
     requiredForLiveMode: true,
   },
   {
@@ -216,13 +252,13 @@ export const supportPersistenceTargets: SupportPersistenceTarget[] = [
   {
     table: "ai_approvals",
     purpose: "保存人工确认或驳回记录，证明 AI 没有绕过人工审核。",
-    usedByApis: ["POST /api/support/ai-drafts", "POST /api/support/ai-drafts/review"],
+    usedByApis: ["POST /api/support/ai-drafts", "POST /api/support/ai-drafts/review", "POST /api/support/replies/send"],
     requiredForLiveMode: true,
   },
   {
     table: "audit_logs",
     purpose: "保存谁在什么时间读取、生成、接管或审核了客服动作。",
-    usedByApis: ["GET /api/support/threads", "GET /api/support/threads/[threadId]", "POST /api/support/threads", "POST /api/support/ai-drafts", "POST /api/support/ai-drafts/review", "GET /api/support/handoff-report"],
+    usedByApis: ["GET /api/support/threads", "GET /api/support/threads/[threadId]", "POST /api/support/threads", "POST /api/support/ai-drafts", "POST /api/support/ai-drafts/review", "POST /api/support/replies/send", "GET /api/support/handoff-report"],
     requiredForLiveMode: true,
   },
 ];

@@ -171,6 +171,64 @@ await check(
 );
 
 await check(
+  "高风险草稿发送前置检查被阻断",
+  {
+    url: `${baseUrl}/api/support/replies/send`,
+    method: "POST",
+    headers: jsonHeaders("support"),
+    body: JSON.stringify({ draftId: "ars_2" }),
+  },
+  (response, data) => ({
+    ok:
+      response.status === 409 &&
+      data?.error === "support_reply_send_blocked" &&
+      data?.mode === "demo" &&
+      data?.sendAttempted === false &&
+      data?.guardrails?.noCustomerMessageSent === true &&
+      Array.isArray(data?.blockedReasons) &&
+      data.blockedReasons.includes("requires_human_approval") &&
+      data.blockedReasons.includes("medium_high_risk_manual_only"),
+    detail: `状态 ${response.status}，阻断 ${data?.blockedReasons?.join(",") ?? "none"}`,
+  }),
+);
+
+await check(
+  "低风险已审核草稿只进入人工发送候选",
+  {
+    url: `${baseUrl}/api/support/replies/send`,
+    method: "POST",
+    headers: jsonHeaders("support"),
+    body: JSON.stringify({ draftId: "ars_3" }),
+  },
+  (response, data) => ({
+    ok:
+      response.status === 200 &&
+      data?.mode === "demo" &&
+      data?.sendAttempted === false &&
+      data?.eligibleForManualSend === true &&
+      data?.sendAdapterEnabled === false &&
+      data?.guardrails?.noCustomerMessageSent === true &&
+      Array.isArray(data?.auditEvents) &&
+      data.auditEvents.some((item) => item.action === "support.reply_send.guard" && item.result === "blocked"),
+    detail: `候选 ${String(data?.eligibleForManualSend)}，已发送 ${String(data?.sendAttempted)}`,
+  }),
+);
+
+await check(
+  "老板角色不能执行客服发送前置检查",
+  {
+    url: `${baseUrl}/api/support/replies/send`,
+    method: "POST",
+    headers: jsonHeaders("gm"),
+    body: JSON.stringify({ draftId: "ars_3" }),
+  },
+  (response) => ({
+    ok: response.status === 403,
+    detail: response.status === 403 ? "发送前置权限拦截正常" : `预期 403，实际 ${response.status}`,
+  }),
+);
+
+await check(
   "老板角色不能审核客服草稿",
   {
     url: `${baseUrl}/api/support/ai-drafts/review`,

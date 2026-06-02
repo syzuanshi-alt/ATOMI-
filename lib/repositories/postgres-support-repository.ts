@@ -20,7 +20,9 @@ import type {
   CreateAiDraftResult,
   CreateAiDraftInput,
   CreateInboundSupportMessageResult,
+  EvaluateReplySendInput,
   HandoffReportResult,
+  ReplySendGuardResult,
   ReviewAiDraftResult,
   ReviewAiDraftInput,
   SupportActor,
@@ -229,7 +231,7 @@ const buildAuditEvent = (
   actor: SupportActor,
   action: SupportAuditAction,
   target: Pick<SupportAuditEvent, "targetType" | "targetId" | "riskLevel" | "note"> & {
-    result?: Extract<SupportAuditEvent["result"], "postgres_read" | "postgres_created" | "postgres_reviewed">;
+    result?: Extract<SupportAuditEvent["result"], "postgres_read" | "postgres_created" | "postgres_reviewed" | "blocked">;
   },
 ): SupportAuditEvent => ({
   id: `audit_postgres_${action}_${target.targetId ?? "all"}_${Date.now()}_${postgresAuditCounter++}`,
@@ -981,6 +983,148 @@ export const postgresSupportRepository: SupportRepository = {
             riskLevel: approval.riskLevel,
             result: "postgres_reviewed",
             note: "PostgreSQL 沙箱已更新 ai_reply_suggestions，写入 ai_approvals 和 audit_logs；未发送客户消息。",
+          }),
+        ],
+      };
+    } catch (error) {
+      await client.query("rollback");
+      throw error;
+    } finally {
+      client.release();
+    }
+  },
+
+  async evaluateReplySendGuard(actor: SupportActor, input: EvaluateReplySendInput): Promise<ReplySendGuardResult | null> {
+    const tenantId = resolveTenantId(actor);
+    if (!isUuid(input.draftId)) {
+      return null;
+    }
+
+    const client = await getDb().connect();
+
+    try {
+      await client.query("begin");
+
+      const draftResult = await client.query<DraftRow>(
+        `
+          select
+            id::text as "id",
+            thread_id::text as "threadId",
+            message_id::text as "messageId",
+            draft_text as "draftText",
+            risk_level as "riskLevel",
+            reason,
+            status,
+            can_auto_send as "canAutoSend",
+            created_at as "createdAt"
+          from ai_reply_suggestions
+          where tenant_id = $1
+            and id = $2
+          limit 1
+        `,
+        [tenantId, input.draftId],
+      );
+      const draft = draftResult.rows[0] ? mapDraft(draftResult.rows[0]) : null;
+      if (!draft) {
+        await client.query("rollback");
+        return null;
+      }
+
+      const approvalRows = await client.query<ApprovalRow>(
+        `
+          select
+            id::text as "id",
+            source_type as "sourceType",
+            source_id::text as "sourceId",
+            risk_level as "riskLevel",
+            decision,
+            approver_ref as "approverRef",
+            final_text as "finalText",
+            review_note as "reviewNote",
+            human_edited as "humanEdited",
+            decided_at as "decidedAt"
+          from ai_approvals
+          where tenant_id = $1
+            and source_type = 'ai_reply_suggestion'
+            and source_id = $2
+          order by decided_at desc
+          limit 1
+        `,
+        [tenantId, draft.id],
+      );
+      const approval = approvalRows.rows[0] ? mapApproval(approvalRows.rows[0]) : null;
+      const humanApprovalFound = draft.status === "approved" || approval?.decision === "approved";
+      const draftRejected = draft.status === "rejected" || approval?.decision === "rejected";
+      const mediumHighRiskManualOnly = draft.riskLevel !== "low";
+      const blockedReasons = [
+        ...(!humanApprovalFound ? ["requires_human_approval"] : []),
+        ...(draftRejected ? ["draft_rejected"] : []),
+        ...(mediumHighRiskManualOnly && !humanApprovalFound ? ["medium_high_risk_manual_only"] : []),
+      ];
+      const eligibleForManualSend = humanApprovalFound && !draftRejected;
+
+      await client.query(
+        `
+          insert into audit_logs (tenant_id, actor, event, metadata)
+          values ($1, $2, 'support.reply_send.guard', $3::jsonb)
+        `,
+        [
+          tenantId,
+          actor.actorRef,
+          JSON.stringify({
+            source: "postgres_support_repository",
+            draftId: draft.id,
+            threadId: draft.threadId,
+            messageId: draft.messageId,
+            approvalId: approval?.id ?? null,
+            riskLevel: draft.riskLevel,
+            status: draft.status,
+            eligibleForManualSend,
+            blockedReasons,
+            sendAttempted: false,
+            noCustomerMessageSent: true,
+            note: "发送前置护栏检查；当前不会发送客户消息。",
+          }),
+        ],
+      );
+
+      await client.query("commit");
+
+      return {
+        mode: "postgres",
+        persisted: true,
+        note: eligibleForManualSend
+          ? "发送前置检查通过。当前发送适配器关闭，只写入审计日志，不发送客户消息。"
+          : "发送前置检查未通过。已写入审计日志，未发送客户消息。",
+        draft,
+        approval,
+        sendAttempted: false,
+        eligibleForManualSend,
+        sendAdapterEnabled: false,
+        blockedReasons,
+        requiredChecks: {
+          draftExists: true,
+          humanApprovalFound,
+          draftNotRejected: !draftRejected,
+          mediumHighRiskManualOnly,
+          sendAdapterEnabled: false,
+          noRealCustomerMessageSent: true,
+        },
+        guardrails: {
+          noCustomerMessageSent: true,
+          noRealPlatformConnected: true,
+          highRiskAutoSendBlocked: true,
+          sendAdapterDisabled: true,
+          auditRequired: true,
+        },
+        persistenceTargets: supportPersistenceTargets,
+        auditEvents: [
+          buildAuditEvent(actor, "support.reply_send.guard", {
+            targetType: "ai_reply_suggestion",
+            targetId: draft.id,
+            riskLevel: draft.riskLevel,
+            result: "blocked",
+            note: "PostgreSQL 沙箱已写入发送前置护栏审计；未发送客户消息。",
           }),
         ],
       };
