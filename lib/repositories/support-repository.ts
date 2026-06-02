@@ -81,7 +81,7 @@ export const getSupportRepositoryStatus = (): SupportRepositoryStatus => {
       databaseUrlConfigured,
       postgresRepositoryEnabled,
       fallbackReason: null,
-      warning: "PostgreSQL Repository 当前支持读取和审核已有 AI 草稿；写入客户消息、生成新草稿、发送客户消息仍需等待下一阶段实现。",
+      warning: "PostgreSQL Repository 当前支持读取、生成沙箱 AI 草稿和审核 AI 草稿；写入客户消息和发送客户消息仍被阻断。",
       envKeys: ["SUPPORT_REPOSITORY_MODE", "DATABASE_URL", "ENABLE_POSTGRES_SUPPORT_REPOSITORY"],
     };
   }

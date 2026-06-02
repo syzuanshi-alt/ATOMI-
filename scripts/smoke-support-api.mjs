@@ -232,6 +232,30 @@ await check(
   }),
 );
 
+await check(
+  "AI 客服托管闭环汇总",
+  {
+    url: `${baseUrl}/api/support/autopilot-summary`,
+    method: "GET",
+    headers: { "x-demo-role": "support" },
+  },
+  (response, data) => ({
+    ok:
+      response.status === 200 &&
+      data?.mode === "demo" &&
+      data?.summary?.totalThreads >= 1 &&
+      data?.summary?.pendingDrafts >= 1 &&
+      data?.summary?.highRiskThreads >= 1 &&
+      data?.guardrails?.aiAutoSendEnabled === false &&
+      data?.guardrails?.highRiskAutoSendBlocked === true &&
+      data?.guardrails?.realCustomerMessageWriteEnabled === false &&
+      Array.isArray(data?.reviewQueue) &&
+      data.reviewQueue.some((item) => item.riskLevel === "high" && item.canAutoSend === false) &&
+      data?.handoff?.reportsCount >= 1,
+    detail: `会话 ${data?.summary?.totalThreads ?? 0}，待审核草稿 ${data?.summary?.pendingDrafts ?? 0}，高风险 ${data?.summary?.highRiskThreads ?? 0}`,
+  }),
+);
+
 const failed = checks.filter((item) => !item.ok);
 
 for (const item of checks) {

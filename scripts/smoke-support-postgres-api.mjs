@@ -296,7 +296,7 @@ await check(
 );
 
 await check(
-  "PostgreSQL 只读模式阻断写入",
+  "PostgreSQL 客户消息写入阻断",
   {
     url: `${baseUrl}/api/support/threads`,
     method: "POST",
@@ -312,6 +312,32 @@ await check(
   (response, data) => ({
     ok: response.status === 409 && data?.error === "postgres_repository_read_only",
     detail: response.status === 409 ? "写入已阻断" : `预期 409，实际 ${response.status}`,
+  }),
+);
+
+await check(
+  "PostgreSQL AI 客服托管闭环汇总",
+  {
+    url: `${baseUrl}/api/support/autopilot-summary`,
+    method: "GET",
+    headers: supportHeaders,
+  },
+  (response, data) => ({
+    ok:
+      response.status === 200 &&
+      data?.mode === "postgres" &&
+      data?.summary?.totalThreads >= 2 &&
+      data?.summary?.pendingDrafts >= 1 &&
+      data?.summary?.rejectedDrafts >= 1 &&
+      data?.summary?.highRiskThreads >= 1 &&
+      data?.summary?.auditLogsCount >= 1 &&
+      data?.guardrails?.aiAutoSendEnabled === false &&
+      data?.guardrails?.highRiskAutoSendBlocked === true &&
+      data?.guardrails?.realCustomerMessageWriteEnabled === false &&
+      Array.isArray(data?.reviewQueue) &&
+      data.reviewQueue.some((item) => item.riskLevel === "high" && item.canAutoSend === false) &&
+      data?.handoff?.reportsCount >= 1,
+    detail: `会话 ${data?.summary?.totalThreads ?? 0}，待审核草稿 ${data?.summary?.pendingDrafts ?? 0}，审计 ${data?.summary?.auditLogsCount ?? 0}`,
   }),
 );
 
