@@ -80,6 +80,41 @@ try {
     }
     return `草稿 ${row.drafts_count}，审批 ${row.approvals_count}`;
   });
+
+  await check("只读 Repository 关联数据完整", async () => {
+    const result = await pool.query(
+      `
+        select
+          count(distinct threads.id)::int as threads_count,
+          count(distinct customers.id)::int as customers_count,
+          count(distinct messages.id)::int as messages_count,
+          count(distinct translations.id)::int as translations_count,
+          count(distinct drafts.id)::int as drafts_count
+        from customer_threads threads
+        left join customers
+          on customers.tenant_id = threads.tenant_id
+          and customers.id = threads.customer_id
+        left join messages
+          on messages.tenant_id = threads.tenant_id
+          and messages.thread_id = threads.id
+        left join message_translations translations
+          on translations.tenant_id = threads.tenant_id
+          and translations.message_id = messages.id
+        left join ai_reply_suggestions drafts
+          on drafts.tenant_id = threads.tenant_id
+          and drafts.thread_id = threads.id
+        where threads.tenant_id = $1
+      `,
+      [DEMO_TENANT_ID],
+    );
+    const row = result.rows[0];
+    if (row.threads_count < 2 || row.customers_count < 2 || row.messages_count < 2 || row.drafts_count < 2) {
+      throw new Error(
+        `只读 Repository 关联数据不足：threads=${row.threads_count}, customers=${row.customers_count}, messages=${row.messages_count}, drafts=${row.drafts_count}`,
+      );
+    }
+    return `会话 ${row.threads_count}，客户 ${row.customers_count}，消息 ${row.messages_count}，翻译 ${row.translations_count}，草稿 ${row.drafts_count}`;
+  });
   });
 } catch (error) {
   console.error("PostgreSQL 沙箱烟测未完成。");

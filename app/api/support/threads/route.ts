@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requirePermission } from "@/lib/auth";
-import { getSupportActor, getSupportRepository, withSupportRepositoryStatus } from "@/lib/repositories/support-repository";
+import {
+  getSupportActor,
+  getSupportRepository,
+  getSupportRepositoryStatus,
+  withSupportRepositoryStatus,
+} from "@/lib/repositories/support-repository";
 
 const inboundMessageSchema = z.object({
   channel: z.enum(["independent_site_chat", "independent_site_form", "email", "feishu"]),
@@ -23,6 +28,18 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const forbidden = requirePermission(request, "support.reply");
   if (forbidden) return forbidden;
+
+  const repository = getSupportRepositoryStatus();
+  if (repository.activeMode === "postgres") {
+    return NextResponse.json(
+      {
+        error: "postgres_repository_read_only",
+        message: "PostgreSQL Repository 第一版只支持读取。模拟新消息进入仍请使用 Demo 模式，避免误写客户消息。",
+        repository,
+      },
+      { status: 409 },
+    );
+  }
 
   const body = inboundMessageSchema.safeParse(await request.json());
   if (!body.success) {

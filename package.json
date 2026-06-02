@@ -12,7 +12,8 @@
     "smoke:support": "node scripts/smoke-support-api.mjs",
     "db:schema:check": "node scripts/check-postgres-schema.mjs",
     "db:support:seed": "node scripts/seed-support-demo-data.mjs",
-    "smoke:support:postgres": "node scripts/smoke-support-postgres.mjs"
+    "smoke:support:postgres": "node scripts/smoke-support-postgres.mjs",
+    "smoke:support:postgres-api": "node scripts/smoke-support-postgres-api.mjs"
   },
   "dependencies": {
     "@types/pg": "^8.11.11",

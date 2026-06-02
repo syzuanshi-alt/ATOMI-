@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requirePermission } from "@/lib/auth";
-import { getSupportActor, getSupportRepository, withSupportRepositoryStatus } from "@/lib/repositories/support-repository";
+import {
+  getSupportActor,
+  getSupportRepository,
+  getSupportRepositoryStatus,
+  withSupportRepositoryStatus,
+} from "@/lib/repositories/support-repository";
 
 const aiDraftReviewSchema = z.object({
   draftId: z.string().min(2),
@@ -17,6 +22,18 @@ export async function POST(request: Request) {
 
   const approvalForbidden = requirePermission(request, "actions.approve");
   if (approvalForbidden) return approvalForbidden;
+
+  const repository = getSupportRepositoryStatus();
+  if (repository.activeMode === "postgres") {
+    return NextResponse.json(
+      {
+        error: "postgres_repository_read_only",
+        message: "PostgreSQL Repository 第一版只支持读取。AI 草稿审核落库要等下一阶段实现，不能在只读阶段伪造已审核。",
+        repository,
+      },
+      { status: 409 },
+    );
+  }
 
   const body = aiDraftReviewSchema.safeParse(await request.json());
   if (!body.success) {

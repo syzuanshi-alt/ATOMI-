@@ -77,11 +77,11 @@ export const getSupportRepositoryStatus = (): SupportRepositoryStatus => {
   if (requestedMode === "postgres") {
     return {
       requestedMode,
-      activeMode: "demo",
+      activeMode: "postgres",
       databaseUrlConfigured,
       postgresRepositoryEnabled,
-      fallbackReason: "PostgreSQL Repository 仍是占位实现，当前阶段已回退 Demo Repository。",
-      warning: "已完成真实数据库边界预留，但尚未实现 PostgreSQL 查询和写入，不能用于生产。",
+      fallbackReason: null,
+      warning: "PostgreSQL Repository 第一版只支持只读查询；写入消息、AI 草稿生成和审核仍需回到 Demo 模式或等待下一阶段实现。",
       envKeys: ["SUPPORT_REPOSITORY_MODE", "DATABASE_URL", "ENABLE_POSTGRES_SUPPORT_REPOSITORY"],
     };
   }
