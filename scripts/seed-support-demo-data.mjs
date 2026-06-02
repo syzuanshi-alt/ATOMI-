@@ -28,6 +28,11 @@ try {
   try {
     await client.query("begin");
 
+    const resetTables = ["ai_autoreplies", "ai_approvals", "ai_outputs", "audit_logs", "ai_reply_suggestions"];
+    for (const table of resetTables) {
+      await client.query(`delete from ${table} where tenant_id = $1`, [DEMO_TENANT_ID]);
+    }
+
     await client.query(
       `
         insert into tenants (id, name)
@@ -304,9 +309,10 @@ try {
     client.release();
   }
 
-  console.log("本地 PostgreSQL 假客服数据写入完成。");
-  console.log(`Demo tenant_id：${DEMO_TENANT_ID}`);
-  console.log("注意：这些都是 .test 邮箱和 SANDBOX 订单号，不是真实客户数据。");
+console.log("本地 PostgreSQL 假客服数据写入完成。");
+console.log(`Demo tenant_id：${DEMO_TENANT_ID}`);
+console.log("已重置 Demo 租户下的 AI 草稿、AI 输出、审批和审计沙箱记录。");
+console.log("注意：这些都是 .test 邮箱和 SANDBOX 订单号，不是真实客户数据。");
   });
 } catch (error) {
   console.error("本地 PostgreSQL 假数据写入未完成。");

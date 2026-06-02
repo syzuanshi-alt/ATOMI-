@@ -104,7 +104,7 @@ npm run smoke:support:postgres
 脚本说明：
 
 - `npm run db:schema:check`：执行并检查 `db/schema.sql`，确认关键表存在，客服表有 `tenant_id`。
-- `npm run db:support:seed`：写入本地假租户、假客户、假客服会话、假 AI 草稿。
+- `npm run db:support:seed`：重置 Demo 租户下的 AI 沙箱记录，并写入本地假租户、假客户、假客服会话、假 AI 草稿。
 - `npm run smoke:support:postgres`：按 `tenant_id` 查询沙箱客服数据，并检查没有真实邮箱域名。
 
 注意：
