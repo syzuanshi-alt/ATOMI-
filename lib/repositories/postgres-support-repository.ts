@@ -36,6 +36,7 @@ import { buildSupportReplyDraft } from "@/lib/workflows/support";
 
 const POSTGRES_DEMO_TENANT_ID = "11111111-1111-4111-8111-111111111111";
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+let postgresAuditCounter = 0;
 
 const supportChannels = [
   "independent_site_chat",
@@ -231,7 +232,7 @@ const buildAuditEvent = (
     result?: Extract<SupportAuditEvent["result"], "postgres_read" | "postgres_created" | "postgres_reviewed">;
   },
 ): SupportAuditEvent => ({
-  id: `audit_postgres_${action}_${Date.now()}`,
+  id: `audit_postgres_${action}_${target.targetId ?? "all"}_${Date.now()}_${postgresAuditCounter++}`,
   tenantId: resolveTenantId(actor),
   actorRef: actor.actorRef,
   action,

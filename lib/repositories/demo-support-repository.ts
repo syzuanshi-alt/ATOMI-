@@ -19,12 +19,14 @@ import type {
 } from "@/lib/repositories/support-types";
 import { supportPersistenceTargets } from "@/lib/repositories/support-types";
 
+let auditCounter = 0;
+
 const buildAuditEvent = (
   actor: SupportActor,
   action: SupportAuditAction,
   target: Pick<SupportAuditEvent, "targetType" | "targetId" | "riskLevel" | "result" | "note">,
 ): SupportAuditEvent => ({
-  id: `audit_${action}_${Date.now()}`,
+  id: `audit_${action}_${target.targetId ?? "all"}_${Date.now()}_${auditCounter++}`,
   tenantId: actor.tenantId,
   actorRef: actor.actorRef,
   action,

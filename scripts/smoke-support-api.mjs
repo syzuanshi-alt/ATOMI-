@@ -251,6 +251,8 @@ await check(
       data?.guardrails?.realCustomerMessageWriteEnabled === false &&
       Array.isArray(data?.reviewQueue) &&
       data.reviewQueue.some((item) => item.riskLevel === "high" && item.canAutoSend === false) &&
+      Array.isArray(data?.auditEvents) &&
+      new Set(data.auditEvents.map((item) => item.id)).size === data.auditEvents.length &&
       data?.handoff?.reportsCount >= 1,
     detail: `会话 ${data?.summary?.totalThreads ?? 0}，待审核草稿 ${data?.summary?.pendingDrafts ?? 0}，高风险 ${data?.summary?.highRiskThreads ?? 0}`,
   }),
