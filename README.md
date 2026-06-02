@@ -110,6 +110,7 @@ npm run smoke:support:postgres
 - `npm run db:support:seed`：重置 Demo 租户下的 AI 沙箱记录，并写入本地假租户、假客户、假客服会话、假 AI 草稿。
 - `npm run smoke:support:postgres`：按 `tenant_id` 查询沙箱客服数据，并检查没有真实邮箱域名。
 - `npm run smoke:integrations`：检查数据接入配置草案、CSV 上传配置和权限护栏。
+- `npm run smoke:sync`：检查 Demo 同步任务护栏，确认排队不等于真实平台同步。
 
 注意：
 
