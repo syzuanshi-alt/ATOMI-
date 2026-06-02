@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error: "postgres_repository_read_only",
-        message: "PostgreSQL Repository 第一版只支持读取。模拟新消息进入仍请使用 Demo 模式，避免误写客户消息。",
+        message: "PostgreSQL Repository 当前仍阻断客户消息写入。模拟新消息进入仍请使用 Demo 模式，避免误写客户消息。",
         repository,
       },
       { status: 409 },

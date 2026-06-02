@@ -18,6 +18,7 @@ import type {
 } from "@/lib/types";
 import type {
   CreateAiDraftResult,
+  CreateAiDraftInput,
   CreateInboundSupportMessageResult,
   HandoffReportResult,
   ReviewAiDraftResult,
@@ -31,8 +32,10 @@ import type {
   SupportThreadListResult,
 } from "@/lib/repositories/support-types";
 import { supportPersistenceTargets } from "@/lib/repositories/support-types";
+import { buildSupportReplyDraft } from "@/lib/workflows/support";
 
 const POSTGRES_DEMO_TENANT_ID = "11111111-1111-4111-8111-111111111111";
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const supportChannels = [
   "independent_site_chat",
@@ -151,6 +154,10 @@ type AuditLogRow = {
   createdAt: Date | string;
 };
 
+type IdRow = {
+  id: string;
+};
+
 const isOneOf = <T extends readonly string[]>(values: T, value: unknown): value is T[number] => {
   return typeof value === "string" && values.includes(value as T[number]);
 };
@@ -203,8 +210,10 @@ const asApprovalSourceType = (value: unknown): AiApprovalRecord["sourceType"] =>
   return isOneOf(approvalSourceTypes, value) ? value : "ai_reply_suggestion";
 };
 
+const isUuid = (value: string): boolean => uuidPattern.test(value);
+
 const resolveTenantId = (actor: SupportActor): string => {
-  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(actor.tenantId)) {
+  if (isUuid(actor.tenantId)) {
     return actor.tenantId;
   }
 
@@ -219,7 +228,7 @@ const buildAuditEvent = (
   actor: SupportActor,
   action: SupportAuditAction,
   target: Pick<SupportAuditEvent, "targetType" | "targetId" | "riskLevel" | "note"> & {
-    result?: Extract<SupportAuditEvent["result"], "postgres_read" | "postgres_reviewed">;
+    result?: Extract<SupportAuditEvent["result"], "postgres_read" | "postgres_created" | "postgres_reviewed">;
   },
 ): SupportAuditEvent => ({
   id: `audit_postgres_${action}_${Date.now()}`,
@@ -377,7 +386,7 @@ const getPriorityThreads = (summary: unknown, fallbackThreads: SupportThread[]):
 };
 
 const readOnlyBlocked = async (): Promise<never> => {
-  throw new Error("PostgreSQL Repository 当前只允许读取和审核已有 AI 草稿。写入客户消息、生成新草稿暂时必须继续使用 Demo 模式。");
+  throw new Error("PostgreSQL Repository 当前仍阻断客户消息写入。AI 草稿只能在沙箱内生成或审核，不会发送客户消息。");
 };
 
 const listThreadRows = async (tenantId: string): Promise<ThreadRow[]> => {
@@ -468,7 +477,7 @@ export const postgresSupportRepository: SupportRepository = {
 
     return {
       mode: "postgres",
-      note: "统一客服会话列表来自本地 PostgreSQL 沙箱，只读模式，不代表真实平台已接通。",
+      note: "统一客服会话列表来自本地 PostgreSQL 沙箱读取路径，不代表真实平台已接通。",
       threads,
       customers: await getCustomersByIds(tenantId, customerIds),
       identities: await getIdentitiesByCustomerIds(tenantId, customerIds),
@@ -629,7 +638,7 @@ export const postgresSupportRepository: SupportRepository = {
 
     return {
       mode: "postgres",
-      note: "会话详情来自本地 PostgreSQL 沙箱，只读模式。真实上线前还必须补正式登录、租户授权和审计写入。",
+      note: "会话详情来自本地 PostgreSQL 沙箱读取路径。真实上线前还必须补正式登录、租户授权和审计写入。",
       thread,
       customer: customerRows[0] ?? null,
       identities: thread.customerId === "unknown_customer" ? [] : await getIdentitiesByCustomerIds(tenantId, [thread.customerId]),
@@ -647,8 +656,192 @@ export const postgresSupportRepository: SupportRepository = {
     return readOnlyBlocked();
   },
 
-  async createAiDraft(): Promise<CreateAiDraftResult | null> {
-    return readOnlyBlocked();
+  async createAiDraft(actor: SupportActor, input: CreateAiDraftInput): Promise<CreateAiDraftResult | null> {
+    const tenantId = resolveTenantId(actor);
+    if (!isUuid(input.threadId) || (input.messageId && !isUuid(input.messageId))) {
+      return null;
+    }
+
+    const client = await getDb().connect();
+
+    try {
+      await client.query("begin");
+
+      const threadResult = await client.query<ThreadRow>(
+        `
+          select
+            id::text as "id",
+            customer_id::text as "customerId",
+            channel_type as "channel",
+            subject,
+            status,
+            risk_level as "riskLevel",
+            language,
+            order_ref as "orderRef",
+            last_message_at as "lastMessageAt"
+          from customer_threads
+          where tenant_id = $1
+            and id = $2
+          limit 1
+        `,
+        [tenantId, input.threadId],
+      );
+      const thread = threadResult.rows[0] ? mapThread(threadResult.rows[0]) : null;
+      if (!thread) {
+        await client.query("rollback");
+        return null;
+      }
+
+      const messageResult = await client.query<MessageRow>(
+        input.messageId
+          ? `
+            select
+              id::text as "id",
+              thread_id::text as "threadId",
+              channel_type as "channel",
+              direction,
+              sender_type as "senderType",
+              sender_ref as "senderRef",
+              original_text as "originalText",
+              created_at as "createdAt"
+            from messages
+            where tenant_id = $1
+              and thread_id = $2
+              and id = $3
+            limit 1
+          `
+          : `
+            select
+              id::text as "id",
+              thread_id::text as "threadId",
+              channel_type as "channel",
+              direction,
+              sender_type as "senderType",
+              sender_ref as "senderRef",
+              original_text as "originalText",
+              created_at as "createdAt"
+            from messages
+            where tenant_id = $1
+              and thread_id = $2
+            order by case when direction = 'inbound' then 0 else 1 end, created_at desc
+            limit 1
+          `,
+        input.messageId ? [tenantId, input.threadId, input.messageId] : [tenantId, input.threadId],
+      );
+      const message = messageResult.rows[0] ? mapMessage(messageResult.rows[0]) : null;
+      if (!message) {
+        await client.query("rollback");
+        return null;
+      }
+
+      const candidateDraft = buildSupportReplyDraft(thread, message);
+      const draftResult = await client.query<DraftRow>(
+        `
+          insert into ai_reply_suggestions (
+            tenant_id, thread_id, message_id, draft_text, risk_level, reason, status, can_auto_send
+          )
+          values ($1, $2, $3, $4, $5, $6, 'pending_review', $7)
+          returning
+            id::text as "id",
+            thread_id::text as "threadId",
+            message_id::text as "messageId",
+            draft_text as "draftText",
+            risk_level as "riskLevel",
+            reason,
+            status,
+            can_auto_send as "canAutoSend",
+            created_at as "createdAt"
+        `,
+        [
+          tenantId,
+          thread.id,
+          message.id,
+          candidateDraft.draftText,
+          candidateDraft.riskLevel,
+          candidateDraft.reason,
+          candidateDraft.canAutoSend,
+        ],
+      );
+      const draft = mapDraft(draftResult.rows[0]);
+      const guardrail = draft.canAutoSend
+        ? "已写入本地 PostgreSQL 沙箱。低风险草稿只进入托管候选，当前接口不会发送客户消息。"
+        : "已写入本地 PostgreSQL 沙箱。中高风险草稿必须人工审核，当前接口不会发送客户消息。";
+
+      const aiOutputResult = await client.query<IdRow>(
+        `
+          insert into ai_outputs (
+            tenant_id, source_type, source_id, model_name, prompt_hash,
+            output_text, risk_level, status, metadata
+          )
+          values ($1, 'message', $2, 'sandbox-rule-draft', null, $3, $4, 'generated', $5::jsonb)
+          returning id::text as "id"
+        `,
+        [
+          tenantId,
+          message.id,
+          draft.draftText,
+          draft.riskLevel,
+          JSON.stringify({
+            source: "postgres_support_repository",
+            threadId: thread.id,
+            messageId: message.id,
+            draftId: draft.id,
+            canAutoSend: draft.canAutoSend,
+            guardrail,
+            note: "规则生成的本地沙箱 AI 草稿，不是真实大模型调用，不代表已经发送客户消息。",
+          }),
+        ],
+      );
+      const aiOutputId = aiOutputResult.rows[0]?.id ?? null;
+
+      await client.query(
+        `
+          insert into audit_logs (tenant_id, actor, event, metadata)
+          values ($1, $2, 'support.ai_draft.generate', $3::jsonb)
+        `,
+        [
+          tenantId,
+          actor.actorRef,
+          JSON.stringify({
+            source: "postgres_support_repository",
+            sourceType: "message",
+            sourceId: message.id,
+            threadId: thread.id,
+            draftId: draft.id,
+            aiOutputId,
+            riskLevel: draft.riskLevel,
+            canAutoSend: draft.canAutoSend,
+            result: "postgres_created",
+            note: "本地 PostgreSQL 沙箱生成 AI 草稿并落库；未发送客户消息。",
+          }),
+        ],
+      );
+
+      await client.query("commit");
+
+      return {
+        mode: "postgres",
+        persisted: true,
+        note: "AI 草稿已写入本地 PostgreSQL 沙箱。当前仍是规则沙箱，不是正式 AI 模型调用，也不会发送客户消息。",
+        draft,
+        guardrail,
+        persistenceTargets: supportPersistenceTargets,
+        auditEvents: [
+          buildAuditEvent(actor, "support.ai_draft.generate", {
+            targetType: "ai_reply_suggestion",
+            targetId: draft.id,
+            riskLevel: draft.riskLevel,
+            result: "postgres_created",
+            note: "PostgreSQL 沙箱已写入 ai_reply_suggestions、ai_outputs 和 audit_logs；未发送客户消息。",
+          }),
+        ],
+      };
+    } catch (error) {
+      await client.query("rollback");
+      throw error;
+    } finally {
+      client.release();
+    }
   },
 
   async reviewAiDraft(actor: SupportActor, input: ReviewAiDraftInput): Promise<ReviewAiDraftResult | null> {
@@ -837,7 +1030,7 @@ export const postgresSupportRepository: SupportRepository = {
 
     return {
       mode: "postgres",
-      note: "离线托管日报来自本地 PostgreSQL 沙箱，只读模式。真实模式后续必须按排班和时间窗口生成并写审计。",
+      note: "离线托管日报来自本地 PostgreSQL 沙箱读取路径。真实模式后续必须按排班和时间窗口生成并写审计。",
       reports: reports.map((report): HandoffReport => ({
         id: report.id,
         reportDate: toDateOnly(report.reportDate),

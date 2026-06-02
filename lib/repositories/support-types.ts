@@ -32,7 +32,7 @@ export type SupportAuditEvent = {
   targetType: "customer_thread" | "message" | "ai_reply_suggestion" | "ai_approval" | "handoff_report";
   targetId: string | null;
   riskLevel: SupportRiskLevel | null;
-  result: "demo_read" | "demo_created" | "demo_reviewed" | "postgres_read" | "postgres_reviewed" | "blocked";
+  result: "demo_read" | "demo_created" | "demo_reviewed" | "postgres_read" | "postgres_created" | "postgres_reviewed" | "blocked";
   note: string;
   persistenceTable: "audit_logs";
   createdAt: string;

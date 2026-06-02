@@ -37,9 +37,11 @@ const jsonHeaders = {
   ...supportHeaders,
   "content-type": "application/json",
 };
+const threadShippingId = "88888888-8888-4888-8888-888888888881";
+const messageShippingId = "99999999-9999-4999-8999-999999999991";
 
 await check(
-  "Repository 已进入 PostgreSQL 只读模式",
+  "Repository 已进入 PostgreSQL 沙箱模式",
   {
     url: `${baseUrl}/api/support/repository-status`,
     method: "GET",
@@ -120,6 +122,85 @@ await check(
     detail: `日报 ${data?.reports?.length ?? 0}，高风险 ${data?.highRiskThreads?.length ?? 0}`,
   }),
 );
+
+const generatedDraftData = await check(
+  "PostgreSQL AI 草稿生成落库 API",
+  {
+    url: `${baseUrl}/api/support/ai-drafts`,
+    method: "POST",
+    headers: jsonHeaders,
+    body: JSON.stringify({
+      threadId: threadShippingId,
+      messageId: messageShippingId,
+    }),
+  },
+  (response, data) => ({
+    ok:
+      response.status === 200 &&
+      data?.mode === "postgres" &&
+      data?.persisted === true &&
+      data?.draft?.threadId === threadShippingId &&
+      data?.draft?.messageId === messageShippingId &&
+      data?.draft?.riskLevel === "medium" &&
+      data?.draft?.canAutoSend === false &&
+      Array.isArray(data?.auditEvents) &&
+      data.auditEvents.some((item) => item.action === "support.ai_draft.generate" && item.result === "postgres_created"),
+    detail: `草稿 ${data?.draft?.id ?? "missing"}，风险 ${data?.draft?.riskLevel ?? "unknown"}，落库 ${String(data?.persisted)}`,
+  }),
+);
+
+await checkDb("PostgreSQL AI 草稿生成记录真实入库", async () => {
+  const draftId = generatedDraftData?.draft?.id;
+  if (!draftId) {
+    throw new Error("缺少生成草稿 ID，无法核对数据库入库结果。");
+  }
+
+  return withPostgres(async (pool) => {
+    const result = await pool.query(
+      `
+        select
+          (
+            select count(*)::int
+            from ai_reply_suggestions
+            where tenant_id = $1
+              and id::text = $2
+              and thread_id::text = $3
+              and message_id::text = $4
+              and risk_level = 'medium'
+              and status = 'pending_review'
+              and can_auto_send = false
+          ) as draft_count,
+          (
+            select count(*)::int
+            from ai_outputs
+            where tenant_id = $1
+              and source_type = 'message'
+              and source_id::text = $4
+              and metadata->>'draftId' = $2
+              and status = 'generated'
+          ) as ai_output_count,
+          (
+            select count(*)::int
+            from audit_logs
+            where tenant_id = $1
+              and event = 'support.ai_draft.generate'
+              and metadata->>'draftId' = $2
+              and metadata->>'threadId' = $3
+          ) as audit_count
+      `,
+      [DEMO_TENANT_ID, draftId, threadShippingId, messageShippingId],
+    );
+
+    const row = result.rows[0];
+    if (row.draft_count !== 1 || row.ai_output_count !== 1 || row.audit_count !== 1) {
+      throw new Error(
+        `草稿生成入库不完整：drafts=${row.draft_count}, ai_outputs=${row.ai_output_count}, audits=${row.audit_count}`,
+      );
+    }
+
+    return `草稿 ${row.draft_count}，AI 输出 ${row.ai_output_count}，审计 ${row.audit_count}`;
+  });
+});
 
 const reviewDraftId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2";
 const reviewNote = `PostgreSQL API 烟测驳回记录 ${Date.now()}`;

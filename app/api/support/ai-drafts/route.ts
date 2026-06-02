@@ -4,7 +4,6 @@ import { requirePermission } from "@/lib/auth";
 import {
   getSupportActor,
   getSupportRepository,
-  getSupportRepositoryStatus,
   withSupportRepositoryStatus,
 } from "@/lib/repositories/support-repository";
 
@@ -16,18 +15,6 @@ const aiDraftSchema = z.object({
 export async function POST(request: Request) {
   const forbidden = requirePermission(request, "support.reply");
   if (forbidden) return forbidden;
-
-  const repository = getSupportRepositoryStatus();
-  if (repository.activeMode === "postgres") {
-    return NextResponse.json(
-      {
-        error: "postgres_repository_read_only",
-        message: "PostgreSQL Repository 第一版只支持读取。AI 草稿生成暂时不写入 PostgreSQL，避免误触发自动回复流程。",
-        repository,
-      },
-      { status: 409 },
-    );
-  }
 
   const body = aiDraftSchema.safeParse(await request.json());
   if (!body.success) {

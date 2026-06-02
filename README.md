@@ -66,7 +66,7 @@ DATABASE_URL=postgres://atomi:atomi@127.0.0.1:55432/atomi_growth
 小白团队先按这个规则理解：
 
 - `demo`：默认模式，使用内置模拟数据，适合演示和开发。
-- `postgres`：本地 PostgreSQL（数据库）沙箱模式，只能读取本地假数据，并审核已有 AI 草稿，不能写入真实客户消息。
+- `postgres`：本地 PostgreSQL（数据库）沙箱模式，只能读取本地假数据、生成沙箱 AI 草稿、审核已有 AI 草稿，不能写入真实客户消息。
 - `DATABASE_URL`：数据库连接地址，真实值只能放 `.env.local` 或部署平台环境变量里，不能提交到 Git。
 - `ENABLE_POSTGRES_SUPPORT_REPOSITORY=true`：明确允许进入 PostgreSQL 沙箱路径。默认关闭，防止误用。
 
@@ -81,9 +81,11 @@ GET http://127.0.0.1:4173/api/support/repository-status
 PostgreSQL 当前只支持低风险沙箱能力：
 
 - 可以读取：统一客服会话列表、会话详情、离线托管日报。
+- 可以写入：生成沙箱 AI 草稿，写入 `ai_reply_suggestions`、`ai_outputs` 和 `audit_logs`。
 - 可以写入：审核已有 AI 草稿，写入 `ai_approvals` 和 `audit_logs`。
-- 暂不支持：模拟新消息写入、AI 草稿生成、真实客户回复发送。
-- 客户消息写入和 AI 草稿生成接口在 PostgreSQL 模式下会返回 `409`，提示当前阶段不允许。
+- 暂不支持：模拟新消息写入、真实客户回复发送。
+- 客户消息写入接口在 PostgreSQL 模式下会返回 `409`，提示当前阶段不允许。
+- AI 草稿生成只用本地规则沙箱，不调用真实大模型，也不会发送客户消息。
 
 ## Local PostgreSQL sandbox（本地数据库沙箱）
 
@@ -139,10 +141,10 @@ npm run smoke:support:postgres-api
 必须看到：
 
 ```text
-PostgreSQL API 烟测通过：7/7
+PostgreSQL API 烟测通过：10/10
 ```
 
-测试完成后关闭 `4174` 端口的临时服务。不要把 `.env.local` 默认改成 PostgreSQL 模式，避免团队误把本地假数据库当成真实平台。审核通过或驳回都不代表已经发送客户消息。
+测试完成后关闭 `4174` 端口的临时服务。不要把 `.env.local` 默认改成 PostgreSQL 模式，避免团队误把本地假数据库当成真实平台。生成草稿、审核通过或驳回都不代表已经发送客户消息。
 
 ## Included modules
 
