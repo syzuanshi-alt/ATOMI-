@@ -3,7 +3,10 @@ const baseUrl = process.env.SYNC_SMOKE_BASE_URL ?? "http://127.0.0.1:4173";
 const checks = [];
 
 const check = async (name, request, verify) => {
-  const response = await fetch(request.url, request);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+  const response = await fetch(request.url, { ...request, signal: controller.signal });
+  clearTimeout(timeout);
   const text = await response.text();
   let data = null;
 
@@ -39,10 +42,18 @@ await check(
       typeof data?.queued === "boolean" &&
       typeof data?.noteZh === "string" &&
       data.noteZh.includes("不代表真实平台同步") &&
+      data?.syncAudit?.provider === "shopify" &&
+      data?.syncAudit?.requestedBy === "demo:admin" &&
+      data?.syncAudit?.realSyncStarted === false &&
+      data?.syncAudit?.persistenceTable === "sync_runs" &&
+      ["demo_response_only", "postgres_sandbox"].includes(data?.syncAudit?.persistenceMode) &&
+      ["queued", "skipped", "failed"].includes(data?.syncAudit?.status) &&
+      data?.syncAudit?.containsRealSecrets === false &&
+      data?.syncAudit?.containsCustomerData === false &&
       data?.guardrails?.noRealPlatformWrite === true &&
       data?.guardrails?.noRealSecretsRequired === true &&
       data?.guardrails?.manualReviewBeforeLiveMode === true,
-    detail: `排队 ${String(data?.queued)}，真实同步 ${String(data?.realSyncStarted)}，说明 ${data?.noteZh ?? "missing"}`,
+    detail: `排队 ${String(data?.queued)}，真实同步 ${String(data?.realSyncStarted)}，审计 ${data?.syncAudit?.persistenceMode ?? "missing"}，说明 ${data?.noteZh ?? "missing"}`,
   }),
 );
 

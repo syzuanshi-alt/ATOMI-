@@ -35,7 +35,7 @@ try {
   try {
     await client.query("begin");
 
-    const resetTables = ["ai_autoreplies", "ai_approvals", "ai_outputs", "audit_logs", "ai_reply_suggestions"];
+    const resetTables = ["ai_autoreplies", "ai_approvals", "ai_outputs", "audit_logs", "sync_runs", "ai_reply_suggestions"];
     for (const table of resetTables) {
       await client.query(`delete from ${table} where tenant_id = $1`, [DEMO_TENANT_ID]);
     }

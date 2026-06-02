@@ -301,6 +301,26 @@ create table if not exists gdpr_requests (
   completed_at timestamptz
 );
 
+create table if not exists sync_runs (
+  id uuid primary key default uuid_generate_v4(),
+  tenant_id uuid references tenants(id),
+  provider text not null,
+  status text not null,
+  mode text not null default 'demo',
+  requested_by text not null,
+  queue_name text,
+  job_id text,
+  real_sync_started boolean not null default false,
+  contains_real_secrets boolean not null default false,
+  contains_customer_data boolean not null default false,
+  started_at timestamptz not null default now(),
+  finished_at timestamptz,
+  failure_reason text,
+  retry_count integer not null default 0,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists audit_logs (
   id uuid primary key default uuid_generate_v4(),
   tenant_id uuid references tenants(id),
@@ -321,3 +341,9 @@ create index if not exists idx_ai_reply_suggestions_thread_status
 
 create index if not exists idx_tenant_members_tenant_user
   on tenant_members(tenant_id, user_id);
+
+create index if not exists idx_sync_runs_tenant_provider_created
+  on sync_runs(tenant_id, provider, created_at desc);
+
+create index if not exists idx_sync_runs_status_created
+  on sync_runs(status, created_at desc);

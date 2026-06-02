@@ -42,6 +42,7 @@ try {
         "ai_reply_suggestions",
         "ai_approvals",
         "handoff_reports",
+        "sync_runs",
         "audit_logs",
       ],
     ],
@@ -57,6 +58,7 @@ try {
     "ai_reply_suggestions",
     "ai_approvals",
     "handoff_reports",
+    "sync_runs",
   ].filter((tableName) => !tenantTables.has(tableName));
 
   if (missingTables.length || missingTenantId.length) {

@@ -101,5 +101,6 @@ export const requiredSupportTables = [
   "ai_reply_suggestions",
   "ai_approvals",
   "handoff_reports",
+  "sync_runs",
   "audit_logs",
 ];
