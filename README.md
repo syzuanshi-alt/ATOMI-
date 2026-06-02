@@ -78,6 +78,33 @@ GET http://127.0.0.1:4173/api/support/repository-status
 
 如果误配置为 `SUPPORT_REPOSITORY_MODE=postgres`，系统会回退到 Demo Repository，并在接口返回里说明原因。这样可以避免页面直接崩掉，也能防止团队误以为已经接入真实数据库。
 
+## Local PostgreSQL sandbox（本地数据库沙箱）
+
+本地 PostgreSQL 沙箱只用于验证表结构和假数据读写，不代表已经接入真实客户数据。
+
+操作顺序：
+
+```bash
+docker compose up -d postgres
+copy .env.example .env.local
+npm run db:schema:check
+npm run db:support:seed
+npm run smoke:support:postgres
+```
+
+脚本说明：
+
+- `npm run db:schema:check`：执行并检查 `db/schema.sql`，确认关键表存在，客服表有 `tenant_id`。
+- `npm run db:support:seed`：写入本地假租户、假客户、假客服会话、假 AI 草稿。
+- `npm run smoke:support:postgres`：按 `tenant_id` 查询沙箱客服数据，并检查没有真实邮箱域名。
+
+注意：
+
+- 只允许使用 `.test` 邮箱和 `SANDBOX` 订单号。
+- 不要把真实 `DATABASE_URL`、客户消息、邮箱、手机号写进 Git。
+- `next build` 不能依赖数据库是否启动；数据库连接必须懒加载。
+- 默认客服 API 仍使用 Demo Repository。PostgreSQL 沙箱只是验证数据库能力，不切正式模式。
+
 ## Included modules
 
 - Demo Mode / Live Mode shell.

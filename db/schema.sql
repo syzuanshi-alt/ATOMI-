@@ -6,6 +6,47 @@ create table if not exists tenants (
   created_at timestamptz not null default now()
 );
 
+create table if not exists users (
+  id uuid primary key default uuid_generate_v4(),
+  email text not null unique,
+  display_name text not null,
+  status text not null default 'active',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists roles (
+  id uuid primary key default uuid_generate_v4(),
+  code text not null unique,
+  name text not null,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists permissions (
+  id uuid primary key default uuid_generate_v4(),
+  code text not null unique,
+  name text not null,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists role_permissions (
+  role_id uuid not null references roles(id) on delete cascade,
+  permission_id uuid not null references permissions(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (role_id, permission_id)
+);
+
+create table if not exists tenant_members (
+  id uuid primary key default uuid_generate_v4(),
+  tenant_id uuid not null references tenants(id) on delete cascade,
+  user_id uuid not null references users(id) on delete cascade,
+  role_id uuid not null references roles(id),
+  status text not null default 'active',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (tenant_id, user_id)
+);
+
 create table if not exists integrations (
   id uuid primary key default uuid_generate_v4(),
   tenant_id uuid not null references tenants(id),
@@ -277,3 +318,6 @@ create index if not exists idx_messages_thread_created
 
 create index if not exists idx_ai_reply_suggestions_thread_status
   on ai_reply_suggestions(thread_id, status);
+
+create index if not exists idx_tenant_members_tenant_user
+  on tenant_members(tenant_id, user_id);

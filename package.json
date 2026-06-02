@@ -9,7 +9,10 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "verify:template": "node scripts/verify-template.mjs",
-    "smoke:support": "node scripts/smoke-support-api.mjs"
+    "smoke:support": "node scripts/smoke-support-api.mjs",
+    "db:schema:check": "node scripts/check-postgres-schema.mjs",
+    "db:support:seed": "node scripts/seed-support-demo-data.mjs",
+    "smoke:support:postgres": "node scripts/smoke-support-postgres.mjs"
   },
   "dependencies": {
     "@types/pg": "^8.11.11",
