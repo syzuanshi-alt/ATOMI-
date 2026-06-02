@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { callProvider } from "@/lib/connectors/base";
-import { requirePermission } from "@/lib/auth";
+import { getRequestContext, requirePermission } from "@/lib/auth";
 import { query } from "@/lib/db";
 import { getDemoSnapshot } from "@/lib/demo-data";
 import { getSupportRepositoryStatus, withSupportRepositoryStatus } from "@/lib/repositories/support-repository";
@@ -282,6 +282,7 @@ export async function POST(request: Request) {
   const forbidden = requirePermission(request, "integrations.manage");
   if (forbidden) return forbidden;
 
+  const actor = getRequestContext(request);
   const body = integrationSchema.safeParse(await request.json());
 
   if (!body.success) {
@@ -295,10 +296,24 @@ export async function POST(request: Request) {
       accountRef: body.data.accountRef,
     },
     async () => ({
-      status: "connected",
-      note: "Demo probe only. Replace fetcher after AS provides real API credentials.",
+      status: "demo_probe_ok",
+      noteZh: "Demo 连接探测通过，只说明本地接口可处理请求，不代表真实平台已连接。",
     }),
   );
 
-  return NextResponse.json(result);
+  return NextResponse.json({
+    ...result,
+    mode: actor.mode,
+    requestedBy: actor.actorRef,
+    realConnectionCreated: false,
+    persisted: false,
+    noteZh: "Demo 连接探测已完成，但不保存账号、不保存密钥、不代表真实平台已连接。",
+    guardrails: {
+      noRealSecrets: true,
+      noRealPlatformWrite: true,
+      noConnectionPersisted: true,
+      manualReviewBeforeLiveMode: true,
+      demoProbeOnly: true,
+    },
+  });
 }

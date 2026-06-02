@@ -65,6 +65,58 @@ await check(
   }),
 );
 
+await check(
+  "管理员执行 Demo 连接探测护栏",
+  {
+    url: `${baseUrl}/api/integrations`,
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-demo-role": "admin",
+    },
+    body: JSON.stringify({
+      provider: "shopify",
+      accountRef: "SANDBOX-SHOPIFY-STORE",
+    }),
+  },
+  (response, data) => ({
+    ok:
+      response.status === 200 &&
+      data?.mode === "demo" &&
+      data?.provider === "shopify" &&
+      data?.endpoint === "connection_probe" &&
+      data?.accountRef === "SANDBOX-SHOPIFY-STORE" &&
+      data?.realConnectionCreated === false &&
+      data?.persisted === false &&
+      data?.data?.status === "demo_probe_ok" &&
+      data?.guardrails?.noRealSecrets === true &&
+      data?.guardrails?.noRealPlatformWrite === true &&
+      typeof data?.noteZh === "string" &&
+      data.noteZh.includes("不代表真实平台已连接"),
+    detail: `探测 ${data?.data?.status ?? "missing"}，真实连接 ${String(data?.realConnectionCreated)}`,
+  }),
+);
+
+await check(
+  "客服角色不能执行连接探测",
+  {
+    url: `${baseUrl}/api/integrations`,
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-demo-role": "support",
+    },
+    body: JSON.stringify({
+      provider: "shopify",
+      accountRef: "SANDBOX-SHOPIFY-STORE",
+    }),
+  },
+  (response) => ({
+    ok: response.status === 403,
+    detail: response.status === 403 ? "连接探测权限拦截正常" : `预期 403，实际 ${response.status}`,
+  }),
+);
+
 const failed = checks.filter((item) => !item.ok);
 
 for (const item of checks) {
