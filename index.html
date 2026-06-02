@@ -14,7 +14,7 @@
             <span></span>
           </div>
           <div>
-            <p class="eyebrow">AI 电商自动化</p>
+            <p class="eyebrow">AI（人工智能）电商自动化</p>
             <h1>运营平台</h1>
           </div>
         </div>
@@ -23,12 +23,12 @@
           <button class="nav-item is-active" data-view="dashboard" data-roles="owner,bd,media,support,admin">经营看板</button>
           <button class="nav-item" data-view="integrations" data-roles="admin">数据接入</button>
           <button class="nav-item" data-view="supportHub" data-roles="owner,support,admin">统一客服</button>
-          <button class="nav-item" data-view="creators" data-roles="owner,bd,admin">达人 BD</button>
+          <button class="nav-item" data-view="creators" data-roles="owner,bd,admin">达人 BD（商务拓展）</button>
           <button class="nav-item" data-view="creatives" data-roles="bd,media,admin">内容中心</button>
           <button class="nav-item" data-view="ads" data-roles="owner,media,admin">广告驾驶舱</button>
           <button class="nav-item" data-view="orders" data-roles="owner,support,admin">订单履约</button>
-          <button class="nav-item" data-view="actions" data-roles="owner,bd,media,support,admin">AI 确认中心</button>
-          <button class="nav-item" data-view="privacy" data-roles="support,admin">GDPR 合规</button>
+          <button class="nav-item" data-view="actions" data-roles="owner,bd,media,support,admin">AI（人工智能）确认中心</button>
+          <button class="nav-item" data-view="privacy" data-roles="support,admin">GDPR（欧盟隐私合规）</button>
         </nav>
 
         <section class="mode-panel" aria-label="系统模式">
@@ -54,7 +54,7 @@
               <option value="admin">管理员 / 系统</option>
             </select>
           </label>
-          <p id="roleDescription" class="muted">经营者视图：看 GMV、真实 ROAS、预算风险和高影响动作。</p>
+          <p id="roleDescription" class="muted">经营者视图：看 GMV（成交额）、真实 ROAS（广告回报）、预算风险和高影响动作。</p>
         </section>
 
         <section class="mini-status">
@@ -83,9 +83,9 @@
         <section id="dashboard" class="view is-visible">
           <div class="hero-ops">
             <div class="hero-copy">
-              <p class="eyebrow">AI 电商自动化运营平台</p>
+                <p class="eyebrow">AI（人工智能）电商自动化运营平台</p>
               <h3>先用 Demo 跑通经营、客服、订单和投流闭环，再逐步接入真实平台。</h3>
-              <p>一期重点做可交付后台、统一客服托管、订单物流同步和 AI 审核边界。真实账号、真实密钥、真实客户消息必须进入后端权限和人工审核流程。</p>
+              <p>一期重点做可交付后台、统一客服托管、订单物流同步和 AI（人工智能）审核边界。真实账号、真实密钥、真实客户消息必须进入后端权限和人工审核流程。</p>
             </div>
             <div class="watch-signal" aria-label="腕表业务视觉信号">
               <div class="strap top"></div>
@@ -106,7 +106,7 @@
                 <p class="eyebrow">岗位首页</p>
                 <h3 id="roleHomeTitle">老板今日决策台</h3>
               </div>
-              <span class="status-pill status-demo" id="roleHomeBadge">GMV / ROAS</span>
+              <span class="status-pill status-demo" id="roleHomeBadge">GMV（成交额）/ ROAS（广告回报）</span>
             </div>
             <div class="role-action-grid" id="roleActionGrid"></div>
           </section>
@@ -126,7 +126,7 @@
             <section class="panel">
               <div class="section-head">
                 <div>
-                  <p class="eyebrow">AI 每日建议</p>
+                  <p class="eyebrow">AI（人工智能）每日建议</p>
                   <h3>需要确认的动作</h3>
                 </div>
                 <button class="ghost-button" data-view-link="actions">全部处理</button>
@@ -151,14 +151,14 @@
           <section class="panel upload-panel csv-upload-card">
             <div class="csv-upload-head">
               <div>
-                <h3>CSV 数据上传</h3>
+                <h3>CSV（表格文件）数据上传</h3>
                 <p class="muted">用于前期没有接口权限时导入订单、广告、物流或客服历史数据，帮助快速跑通 Demo 流程。</p>
               </div>
               <label class="ghost-button csv-upload-button" for="csvInput">选择文件</label>
             </div>
             <input id="csvInput" class="sr-only" type="file" accept=".csv" />
             <label class="file-drop" for="csvInput">
-              <span>拖拽 CSV 文件到这里，或点击右上角选择文件</span>
+              <span>拖拽 CSV（表格文件）到这里，或点击右上角选择文件</span>
               <small>支持订单、物流、广告、客服历史数据；真实客户资料上线前必须脱敏。</small>
             </label>
             <div id="csvPreview" class="csv-upload-status">等待上传</div>
@@ -169,9 +169,9 @@
           <div class="section-head">
             <div>
               <p class="eyebrow">达人 BD 管理</p>
-              <h3>达人发现、评分、建联、寄样、ROI 复盘</h3>
+              <h3>达人发现、评分、建联、寄样、ROI（投入产出）复盘</h3>
             </div>
-            <button class="primary-button" id="generateDm">生成英文建联话术</button>
+            <button class="primary-button" id="generateDm">生成英文 DM（私信）建联话术</button>
           </div>
           <div class="data-grid" id="creatorGrid"></div>
         </section>
@@ -184,7 +184,7 @@
             </div>
             <div class="topbar-actions">
               <button class="ghost-button" data-view-link="creators">返回达人列表</button>
-              <button class="primary-button" data-view-link="ads">查看完整广告 ROI</button>
+              <button class="primary-button" data-view-link="ads">查看完整广告 ROI（投入产出）</button>
             </div>
           </div>
           <div id="creatorDetailBody"></div>
@@ -196,7 +196,7 @@
               <p class="eyebrow">素材投流中心</p>
               <h3>短视频素材评分与投流池</h3>
             </div>
-            <button class="primary-button" id="scoreCreative">AI 重新评分</button>
+            <button class="primary-button" id="scoreCreative">AI（人工智能）重新评分</button>
           </div>
           <div class="creative-board" id="creativeBoard"></div>
         </section>
@@ -216,7 +216,7 @@
           <div class="section-head">
             <div>
               <p class="eyebrow">统一客服工作台</p>
-              <h3>多渠道消息先统一接收，AI 只托管低风险问题</h3>
+              <h3>多渠道消息先统一接收，AI（人工智能）只托管低风险问题</h3>
             </div>
             <button class="primary-button" id="simulateSupportMessage">模拟新消息</button>
           </div>
@@ -238,7 +238,7 @@
             <section class="panel support-detail-panel">
               <div class="section-head">
                 <div>
-                  <p class="eyebrow">AI 草稿与人工接管</p>
+                  <p class="eyebrow">AI（人工智能）草稿与人工接管</p>
                   <h3>自动回复只允许低风险引导</h3>
                 </div>
                 <span class="status-pill status-connected">人工确认</span>
@@ -253,7 +253,7 @@
                 <p class="eyebrow">离线托管日报</p>
                 <h3>客服上班后先看这张清单</h3>
               </div>
-              <button class="ghost-button" data-view-link="actions">查看 AI 审核</button>
+              <button class="ghost-button" data-view-link="actions">查看 AI（人工智能）审核</button>
             </div>
             <div class="handoff-grid" id="handoffReport"></div>
           </section>
@@ -273,7 +273,7 @@
         <section id="actions" class="view">
           <div class="section-head">
             <div>
-              <p class="eyebrow">人工审核 Human-in-the-loop</p>
+              <p class="eyebrow">人工审核 Human-in-the-loop（人在回路）</p>
               <h3>改预算、发消息、处理售后必须人工确认</h3>
             </div>
             <button class="primary-button" id="approveAll">批准低风险动作</button>
@@ -284,7 +284,7 @@
         <section id="privacy" class="view">
           <div class="section-head">
             <div>
-              <p class="eyebrow">GDPR 合规 / 审计</p>
+              <p class="eyebrow">GDPR（欧盟隐私合规）/ 审计</p>
               <h3>客户数据查询、删除、匿名化与审计</h3>
             </div>
             <button class="primary-button" id="runGdpr">生成删除工单</button>
@@ -292,7 +292,7 @@
           <section class="panel gdpr-tool">
             <label>
               <span>客户标识</span>
-              <input id="gdprIdentity" type="text" placeholder="email / phone / customerId" />
+              <input id="gdprIdentity" type="text" placeholder="email（邮箱）/ phone（手机号）/ customerId（客户ID）" />
             </label>
             <label>
               <span>处理方式</span>

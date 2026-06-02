@@ -1,367 +1,351 @@
 const viewTitles = {
-  dashboard: "经营看板",
-  integrations: "数据接入",
-  creators: "达人 BD",
-  creatorDetail: "达人详情",
-  creatives: "内容中心",
-  ads: "广告驾驶舱",
-  supportHub: "统一客服工作台",
-  orders: "订单履约",
-  actions: "AI 确认中心",
-  privacy: "GDPR 合规",
+    dashboard: "经营看板",
+    integrations: "数据接入",
+    creators: "达人 BD（商务拓展）",
+    creatorDetail: "达人详情",
+    creatives: "内容中心",
+    ads: "广告驾驶舱",
+    supportHub: "统一客服工作台",
+    orders: "订单履约",
+    actions: "AI（人工智能）确认中心",
+    privacy: "GDPR（欧盟隐私合规）",
 };
-
 let currentRole = "owner";
-
 const roleConfigs = {
-  owner: {
-    label: "老板 / 经营者",
-    badge: "成交额 / 投产比",
-    description: "经营者视图：看 GMV、真实 ROAS、预算风险和高影响动作。",
-    defaultView: "dashboard",
-    allowedViews: ["dashboard", "supportHub", "creators", "creatorDetail", "ads", "orders", "actions"],
-    homeTitle: "老板今日决策台",
-    actions: [
-      { title: "确认 US 广告预算 +20%", detail: "真实毛利 ROAS 4.22x，但会增加日消耗，需要老板确认。", target: "actions", cta: "去确认" },
-      { title: "查看夜间客服风险", detail: "AI 离线托管收集了 6 条潜在成交和 2 条售后风险，需客服上班后接管。", target: "supportHub", cta: "看客服日报" },
-      { title: "复盘达人投流回本", detail: "@watchwithmia 已产生投流 GMV，可判断是否续约。", target: "creators", cta: "看达人 ROI" },
-    ],
-  },
-  bd: {
-    label: "BD / 达人运营",
-    badge: "Creator Tasks",
-    description: "BD 视图：看达人待办、建联话术、寄样、授权和视频产出。",
-    defaultView: "creators",
-    allowedViews: ["dashboard", "creators", "creatorDetail", "creatives", "actions"],
-    homeTitle: "BD 今日达人待办",
-    actions: [
-      { title: "发送 @londonfits 首封 DM", detail: "AI 已准备个性化英文建联话术，发送前需人工确认。", target: "actions", cta: "处理话术" },
-      { title: "确认 @watchwithmia 寄样地址", detail: "样品未确认会影响视频产出节奏。", target: "creatorDetail", cta: "看合作链路" },
-      { title: "归档已授权视频", detail: "已授权素材需要进入内容中心，供投流团队测试。", target: "creatives", cta: "看内容中心" },
-    ],
-  },
-  media: {
-    label: "投流 / 广告投手",
-    badge: "CPA / Creative",
-    description: "投流视图：看素材、国家、人群、CPA、真实毛利 ROAS 和预算动作。",
-    defaultView: "ads",
-    allowedViews: ["dashboard", "creatives", "ads", "actions"],
-    homeTitle: "投流今日操作台",
-    actions: [
-      { title: "放量 Luxury gift under $100", detail: "US 真实 ROAS 4.22x，建议小幅加预算并继续观察。", target: "actions", cta: "确认预算" },
-      { title: "暂停 DE 低效素材", detail: "CPA 高于目标，AI 建议重剪前 3 秒。", target: "ads", cta: "看素材表现" },
-      { title: "从达人视频生成广告测试", detail: "高分 Creator Asset 可复制到 US / CA 测试池。", target: "creatives", cta: "看素材池" },
-    ],
-  },
-  support: {
-    label: "客服 / 履约",
-    badge: "客服 / 订单",
-    description: "客服视图：看统一消息、AI 草稿、离线托管日报、订单物流、售后风险和 GDPR 请求。",
-    defaultView: "supportHub",
-    allowedViews: ["dashboard", "supportHub", "orders", "actions", "privacy"],
-    homeTitle: "客服今日处理台",
-    actions: [
-      { title: "处理离线托管日报", detail: "昨晚 AI 只回复低风险问题，并收集订单号、邮箱、截图和问题类型。", target: "supportHub", cta: "看统一客服" },
-      { title: "确认 AS-1028 刻字信息", detail: "客户刻字疑似需要二次确认，AI 已准备英文回复草稿。", target: "orders", cta: "看订单" },
-      { title: "处理 UK 物流延迟", detail: "AS-1041 出现 carrier delay，需要提前安抚客户。", target: "actions", cta: "处理售后" },
-    ],
-  },
-  admin: {
-    label: "管理员 / 系统",
-    badge: "Access / Audit",
-    description: "管理员视图：看平台接入、权限、同步状态、合规和审计。",
-    defaultView: "integrations",
-    allowedViews: ["dashboard", "integrations", "supportHub", "creators", "creatorDetail", "creatives", "ads", "orders", "actions", "privacy"],
-    homeTitle: "系统管理员控制台",
-    actions: [
-      { title: "配置平台连接", detail: "API token 只进后端，前端只显示连接状态。", target: "integrations", cta: "接入平台" },
-      { title: "检查客服托管边界", detail: "确认 AI 不会自动承诺退款、补偿、改价、取消订单或发送真实消息。", target: "supportHub", cta: "看客服规则" },
-      { title: "检查 AI 动作审计", detail: "预算、发信、客服回复都必须留下确认记录。", target: "actions", cta: "看动作" },
-    ],
-  },
+    owner: {
+        label: "老板 / 经营者",
+        badge: "成交额 / 投产比",
+        description: "经营者视图：看 GMV（成交额）、真实 ROAS（广告回报）、预算风险和高影响动作。",
+        defaultView: "dashboard",
+        allowedViews: ["dashboard", "supportHub", "creators", "creatorDetail", "ads", "orders", "actions"],
+        homeTitle: "老板今日决策台",
+        actions: [
+            { title: "确认 US（美国）广告预算 +20%", detail: "真实毛利 ROAS（广告回报）4.22x，但会增加日消耗，需要老板确认。", target: "actions", cta: "去确认" },
+            { title: "查看夜间客服风险", detail: "AI（人工智能）离线托管收集了 6 条潜在成交和 2 条售后风险，需客服上班后接管。", target: "supportHub", cta: "看客服日报" },
+            { title: "复盘达人投流回本", detail: "@watchwithmia 已产生投流 GMV（成交额），可判断是否续约。", target: "creators", cta: "看达人 ROI（投入产出）" },
+        ],
+    },
+    bd: {
+        label: "BD（商务拓展）/ 达人运营",
+        badge: "达人任务（Creator Tasks）",
+        description: "BD 视图：看达人待办、建联话术、寄样、授权和视频产出。",
+        defaultView: "creators",
+        allowedViews: ["dashboard", "creators", "creatorDetail", "creatives", "actions"],
+        homeTitle: "BD 今日达人待办",
+        actions: [
+            { title: "发送 @londonfits 首封 DM（私信）", detail: "AI（人工智能）已准备个性化英文建联话术，发送前需人工确认。", target: "actions", cta: "处理话术" },
+            { title: "确认 @watchwithmia 寄样地址", detail: "样品未确认会影响视频产出节奏。", target: "creatorDetail", cta: "看合作链路" },
+            { title: "归档已授权视频", detail: "已授权素材需要进入内容中心，供投流团队测试。", target: "creatives", cta: "看内容中心" },
+        ],
+    },
+    media: {
+        label: "投流 / 广告投手",
+        badge: "CPA（获客成本）/ Creative（素材）",
+        description: "投流视图：看素材、国家、人群、CPA（获客成本）、真实毛利 ROAS（广告回报）和预算动作。",
+        defaultView: "ads",
+        allowedViews: ["dashboard", "creatives", "ads", "actions"],
+        homeTitle: "投流今日操作台",
+        actions: [
+            { title: "放量 Luxury gift under $100（百美元内轻奢礼物）", detail: "US（美国）真实 ROAS（广告回报）4.22x，建议小幅加预算并继续观察。", target: "actions", cta: "确认预算" },
+            { title: "暂停 DE（德国）低效素材", detail: "CPA（获客成本）高于目标，AI（人工智能）建议重剪前 3 秒。", target: "ads", cta: "看素材表现" },
+            { title: "从达人视频生成广告测试", detail: "高分 Creator Asset（达人素材）可复制到 US（美国）/ CA（加拿大）测试池。", target: "creatives", cta: "看素材池" },
+        ],
+    },
+    support: {
+        label: "客服 / 履约",
+        badge: "客服 / 订单",
+        description: "客服视图：看统一消息、AI（人工智能）草稿、离线托管日报、订单物流、售后风险和 GDPR（欧盟隐私合规）请求。",
+        defaultView: "supportHub",
+        allowedViews: ["dashboard", "supportHub", "orders", "actions", "privacy"],
+        homeTitle: "客服今日处理台",
+        actions: [
+            { title: "处理离线托管日报", detail: "昨晚 AI（人工智能）只回复低风险问题，并收集订单号、邮箱、截图和问题类型。", target: "supportHub", cta: "看统一客服" },
+            { title: "确认 AS-1028 刻字信息", detail: "客户刻字疑似需要二次确认，AI（人工智能）已准备英文回复草稿。", target: "orders", cta: "看订单" },
+            { title: "处理 UK（英国）物流延迟", detail: "AS-1041 出现 carrier delay（承运商延迟），需要提前安抚客户。", target: "actions", cta: "处理售后" },
+        ],
+    },
+    admin: {
+        label: "管理员 / 系统",
+        badge: "权限 / 审计（Access / Audit）",
+        description: "管理员视图：看平台接入、权限、同步状态、合规和审计。",
+        defaultView: "integrations",
+        allowedViews: ["dashboard", "integrations", "supportHub", "creators", "creatorDetail", "creatives", "ads", "orders", "actions", "privacy"],
+        homeTitle: "系统管理员控制台",
+        actions: [
+            { title: "配置平台连接", detail: "API token（接口密钥）只进后端，前端只显示连接状态。", target: "integrations", cta: "接入平台" },
+            { title: "检查客服托管边界", detail: "确认 AI（人工智能）不会自动承诺退款、补偿、改价、取消订单或发送真实消息。", target: "supportHub", cta: "看客服规则" },
+            { title: "检查 AI（人工智能）动作审计", detail: "预算、发信、客服回复都必须留下确认记录。", target: "actions", cta: "看动作" },
+        ],
+    },
 };
-
 const integrations = [
-  { id: "shopify", provider: "shopify", name: "Shopify / 独立站", hint: "接入店铺、商品、订单与客户基础数据，优先用于独立站业务验证。", status: "demo", inputLabel: "店铺域名", placeholder: "your-store.myshopify.com" },
-  { id: "meta", provider: "meta_ads", name: "Meta Ads", hint: "同步广告账户、花费、转化与素材表现，用于投流驾驶舱分析。", status: "demo", inputLabel: "广告账户 ID", placeholder: "act_1234567890" },
-  { id: "tiktok", provider: "tiktok_ads", name: "TikTok Ads", hint: "接入 TikTok 广告数据，监控短视频投流成本、转化与素材效率。", status: "demo", inputLabel: "Advertiser ID（广告主 ID）", placeholder: "advertiser_id_123456" },
-  { id: "instagram", provider: "instagram", name: "Instagram Graph", hint: "接入 Instagram 商业账号内容、互动与潜在客户线索数据。", status: "demo", inputLabel: "Business Account ID", placeholder: "instagram_business_account_id" },
-  { id: "logistics", provider: "logistics", name: "物流 API", hint: "同步发货状态、轨迹节点、异常包裹与售后查询所需物流信息。", status: "demo", inputLabel: "物流账号 / API Profile", placeholder: "carrier_profile_or_api_account" },
-  { id: "support", provider: "support", name: "客服系统", hint: "接入独立站客服、邮件客服或第三方客服工作区，汇入统一客服台。", status: "demo", inputLabel: "客服工作区", placeholder: "zendesk_or_gorgias_workspace" },
+    { id: "shopify", provider: "shopify", name: "Shopify / 独立站", hint: "接入店铺、商品、订单与客户基础数据，优先用于独立站业务验证。", status: "demo", inputLabel: "店铺域名", placeholder: "your-store.myshopify.com" },
+    { id: "meta", provider: "meta_ads", name: "Meta Ads（Meta 广告）", hint: "同步广告账户、花费、转化与素材表现，用于投流驾驶舱分析。", status: "demo", inputLabel: "广告账户 ID", placeholder: "act_1234567890" },
+    { id: "tiktok", provider: "tiktok_ads", name: "TikTok Ads（TikTok 广告）", hint: "接入 TikTok 广告数据，监控短视频投流成本、转化与素材效率。", status: "demo", inputLabel: "Advertiser ID（广告主 ID）", placeholder: "advertiser_id_123456" },
+    { id: "instagram", provider: "instagram", name: "Instagram Graph（Instagram 数据接口）", hint: "接入 Instagram 商业账号内容、互动与潜在客户线索数据。", status: "demo", inputLabel: "Business Account ID（商业账号 ID）", placeholder: "instagram_business_account_id" },
+    { id: "logistics", provider: "logistics", name: "物流 API（物流接口）", hint: "同步发货状态、轨迹节点、异常包裹与售后查询所需物流信息。", status: "demo", inputLabel: "物流账号 / API Profile（接口配置）", placeholder: "carrier_profile_or_api_account" },
+    { id: "support", provider: "support", name: "客服系统", hint: "接入独立站客服、邮件客服或第三方客服工作区，汇入统一客服台。", status: "demo", inputLabel: "客服工作区", placeholder: "zendesk_or_gorgias_workspace" },
 ];
-
 const kpis = [
-  { label: "GMV", value: "$184,260", delta: "+18.4% vs last 7d", direction: "up" },
-  { label: "真实 ROAS", value: "3.42x", delta: "+0.31 after profit sync", direction: "up" },
-  { label: "CPA", value: "$28.60", delta: "-12.1% in US / CA", direction: "up" },
-  { label: "待人工确认", value: "9", delta: "3 high impact actions", direction: "down" },
+    { label: "GMV（成交额）", value: "$184,260", delta: "近 7 天 +18.4%", direction: "up" },
+    { label: "真实 ROAS（广告回报）", value: "3.42x", delta: "同步利润后 +0.31", direction: "up" },
+    { label: "CPA（获客成本）", value: "$28.60", delta: "US（美国）/ CA（加拿大）-12.1%", direction: "up" },
+    { label: "待人工确认", value: "9", delta: "3 个高影响动作", direction: "down" },
 ];
-
 const countries = [
-  { country: "US", spendCents: 426000, revenueCents: 1689000, cpaCents: 2860, roasBps: 39600 },
-  { country: "CA", spendCents: 138000, revenueCents: 496000, cpaCents: 2460, roasBps: 35900 },
-  { country: "UK", spendCents: 210000, revenueCents: 642000, cpaCents: 3180, roasBps: 30600 },
-  { country: "AU", spendCents: 126000, revenueCents: 354000, cpaCents: 3320, roasBps: 28100 },
-  { country: "DE", spendCents: 104000, revenueCents: 244000, cpaCents: 4120, roasBps: 23500 },
-  { country: "FR", spendCents: 97000, revenueCents: 212000, cpaCents: 4380, roasBps: 21900 },
+    { country: "US", spendCents: 426000, revenueCents: 1689000, cpaCents: 2860, roasBps: 39600 },
+    { country: "CA", spendCents: 138000, revenueCents: 496000, cpaCents: 2460, roasBps: 35900 },
+    { country: "UK", spendCents: 210000, revenueCents: 642000, cpaCents: 3180, roasBps: 30600 },
+    { country: "AU", spendCents: 126000, revenueCents: 354000, cpaCents: 3320, roasBps: 28100 },
+    { country: "DE", spendCents: 104000, revenueCents: 244000, cpaCents: 4120, roasBps: 23500 },
+    { country: "FR", spendCents: 97000, revenueCents: 212000, cpaCents: 4380, roasBps: 21900 },
 ];
-
 const creators = [
-  { handle: "@watchwithmia", platform: "TikTok", country: "US", followers: 184000, aiScore: 92, status: "寄样待确认", tags: ["gift guide", "couple", "custom watch"] },
-  { handle: "@londonfits", platform: "Instagram", country: "UK", followers: 96000, aiScore: 86, status: "待发送 DM", tags: ["men style", "minimal", "ugc"] },
-  { handle: "@timeless.au", platform: "TikTok", country: "AU", followers: 142000, aiScore: 81, status: "已授权素材", tags: ["unboxing", "wrist shot", "holiday"] },
-  { handle: "@montreparis", platform: "Instagram", country: "FR", followers: 73000, aiScore: 74, status: "需二次跟进", tags: ["fashion", "couple gift", "engraving"] },
-  { handle: "@de.stylelab", platform: "TikTok", country: "DE", followers: 121000, aiScore: 79, status: "等待报价", tags: ["streetwear", "premium", "male"] },
-  { handle: "@northgift", platform: "Instagram", country: "CA", followers: 68000, aiScore: 88, status: "内容已发布", tags: ["holiday gifts", "ugc", "couples"] },
+    { handle: "@watchwithmia", platform: "TikTok", country: "US", followers: 184000, aiScore: 92, status: "寄样待确认", tags: ["gift guide（礼物指南）", "couple（情侣）", "custom watch（定制腕表）"] },
+    { handle: "@londonfits", platform: "Instagram", country: "UK", followers: 96000, aiScore: 86, status: "待发送 DM（私信）", tags: ["men style（男士穿搭）", "minimal（极简风）", "UGC（用户原创内容）"] },
+    { handle: "@timeless.au", platform: "TikTok", country: "AU", followers: 142000, aiScore: 81, status: "已授权素材", tags: ["unboxing（开箱）", "wrist shot（上手镜头）", "holiday（节日礼物）"] },
+    { handle: "@montreparis", platform: "Instagram", country: "FR", followers: 73000, aiScore: 74, status: "需二次跟进", tags: ["fashion（时尚）", "couple gift（情侣礼物）", "engraving（刻字）"] },
+    { handle: "@de.stylelab", platform: "TikTok", country: "DE", followers: 121000, aiScore: 79, status: "等待报价", tags: ["streetwear（街头穿搭）", "premium（高端感）", "male（男性用户）"] },
+    { handle: "@northgift", platform: "Instagram", country: "CA", followers: 68000, aiScore: 88, status: "内容已发布", tags: ["holiday gifts（节日礼物）", "UGC（用户原创内容）", "couples（情侣）"] },
 ];
-
-let selectedCreatorId = creators[0]?.handle || "";
-
+let selectedCreatorId = creators[0]?.handle ?? "";
 const creatorDetails = [
-  {
-    creatorId: "@watchwithmia",
-    recommendation: "建议进入小预算广告测试池。内容方向与 US 情侣礼物和定制腕表高度匹配，评论区购买意图强。",
-    nextAction: "BD 确认寄样地址和素材授权范围，投流同事准备 US 小预算测试计划。",
-    totalCostCents: 61000,
-    sampleCostCents: 11000,
-    creatorFeeCents: 50000,
-    organicRevenueCents: 132000,
-    paidRevenueCents: 768000,
-    grossProfitCents: 284000,
-    roiBps: 46500,
-    journey: ["发现达人", "AI 评分 92", "生成英文 DM", "人工确认发送", "寄样待确认", "素材授权待签", "视频脚本确认", "发布后进入投流池"],
-    videos: [
-      { id: "v1", title: "3s close-up engraving hook", url: "TikTok draft / demo", organicViews: 52000, hookScore: 94, completionRateBps: 4100, adScaleScore: 91, adStatus: "test_pool", paidRevenueCents: 768000, grossProfitCents: 284000, spendCents: 182000 },
-      { id: "v2", title: "Couple gift reveal", url: "TikTok draft / demo", organicViews: 28000, hookScore: 86, completionRateBps: 3600, adScaleScore: 83, adStatus: "testing", paidRevenueCents: 186000, grossProfitCents: 64000, spendCents: 61000 },
-    ],
-  },
-  {
-    creatorId: "@londonfits",
-    recommendation: "建议先完成英文 DM 和报价确认，不直接进入投流。达人风格适合 UK 男士礼物，但缺少授权素材。",
-    nextAction: "BD 发送首封 DM，确认是否接受样品置换或低预算 UGC 合作。",
-    totalCostCents: 0,
-    sampleCostCents: 0,
-    creatorFeeCents: 0,
-    organicRevenueCents: 0,
-    paidRevenueCents: 0,
-    grossProfitCents: 0,
-    roiBps: 0,
-    journey: ["发现达人", "AI 评分 86", "待生成 DM", "等待回复", "报价确认", "寄样", "视频发布", "ROI 复盘"],
-    videos: [
-      { id: "v3", title: "Minimal watch styling concept", url: "No video yet", organicViews: 0, hookScore: 0, completionRateBps: 0, adScaleScore: 0, adStatus: "not_ready", paidRevenueCents: 0, grossProfitCents: 0, spendCents: 0 },
-    ],
-  },
-  {
-    creatorId: "@timeless.au",
-    recommendation: "建议保留素材授权，先在 AU 做低预算测试，再根据 CPA 决定是否复制到 CA。",
-    nextAction: "投流同事创建 AU 测试广告组，BD 跟进二次合作报价。",
-    totalCostCents: 43000,
-    sampleCostCents: 10000,
-    creatorFeeCents: 33000,
-    organicRevenueCents: 82000,
-    paidRevenueCents: 248000,
-    grossProfitCents: 91000,
-    roiBps: 21200,
-    journey: ["发现达人", "AI 评分 81", "已建联", "已寄样", "已授权素材", "视频已发布", "进入 AU 测试", "等待 ROI 复盘"],
-    videos: [
-      { id: "v4", title: "Unboxing and wrist shot", url: "TikTok published / demo", organicViews: 47000, hookScore: 82, completionRateBps: 3900, adScaleScore: 84, adStatus: "testing", paidRevenueCents: 248000, grossProfitCents: 91000, spendCents: 62000 },
-    ],
-  },
+    {
+        creatorId: "@watchwithmia",
+        recommendation: "建议进入小预算广告测试池。内容方向与 US（美国）情侣礼物和定制腕表高度匹配，评论区购买意图强。",
+        nextAction: "BD（商务拓展）确认寄样地址和素材授权范围，投流同事准备 US（美国）小预算测试计划。",
+        totalCostCents: 61000,
+        sampleCostCents: 11000,
+        creatorFeeCents: 50000,
+        organicRevenueCents: 132000,
+        paidRevenueCents: 768000,
+        grossProfitCents: 284000,
+        roiBps: 46500,
+        journey: ["发现达人", "AI（人工智能）评分 92", "生成英文 DM（私信）", "人工确认发送", "寄样待确认", "素材授权待签", "视频脚本确认", "发布后进入投流池"],
+        videos: [
+            { id: "v1", title: "3 秒刻字特写开头（3s close-up engraving hook）", url: "TikTok 草稿 / Demo 演示", organicViews: 52000, hookScore: 94, completionRateBps: 4100, adScaleScore: 91, adStatus: "test_pool", paidRevenueCents: 768000, grossProfitCents: 284000, spendCents: 182000 },
+            { id: "v2", title: "情侣礼物展示（Couple gift reveal）", url: "TikTok 草稿 / Demo 演示", organicViews: 28000, hookScore: 86, completionRateBps: 3600, adScaleScore: 83, adStatus: "testing", paidRevenueCents: 186000, grossProfitCents: 64000, spendCents: 61000 },
+        ],
+    },
+    {
+        creatorId: "@londonfits",
+        recommendation: "建议先完成英文 DM（私信）和报价确认，不直接进入投流。达人风格适合 UK（英国）男士礼物，但缺少授权素材。",
+        nextAction: "BD（商务拓展）发送首封 DM（私信），确认是否接受样品置换或低预算 UGC（用户原创内容）合作。",
+        totalCostCents: 0,
+        sampleCostCents: 0,
+        creatorFeeCents: 0,
+        organicRevenueCents: 0,
+        paidRevenueCents: 0,
+        grossProfitCents: 0,
+        roiBps: 0,
+        journey: ["发现达人", "AI（人工智能）评分 86", "待生成 DM（私信）", "等待回复", "报价确认", "寄样", "视频发布", "ROI（投入产出）复盘"],
+        videos: [
+            { id: "v3", title: "极简腕表穿搭概念（Minimal watch styling concept）", url: "暂无视频", organicViews: 0, hookScore: 0, completionRateBps: 0, adScaleScore: 0, adStatus: "not_ready", paidRevenueCents: 0, grossProfitCents: 0, spendCents: 0 },
+        ],
+    },
+    {
+        creatorId: "@timeless.au",
+        recommendation: "建议保留素材授权，先在 AU（澳大利亚）做低预算测试，再根据 CPA（获客成本）决定是否复制到 CA（加拿大）。",
+        nextAction: "投流同事创建 AU（澳大利亚）测试广告组，BD（商务拓展）跟进二次合作报价。",
+        totalCostCents: 43000,
+        sampleCostCents: 10000,
+        creatorFeeCents: 33000,
+        organicRevenueCents: 82000,
+        paidRevenueCents: 248000,
+        grossProfitCents: 91000,
+        roiBps: 21200,
+        journey: ["发现达人", "AI（人工智能）评分 81", "已建联", "已寄样", "已授权素材", "视频已发布", "进入 AU（澳大利亚）测试", "等待 ROI（投入产出）复盘"],
+        videos: [
+            { id: "v4", title: "开箱与上手镜头（Unboxing and wrist shot）", url: "TikTok 已发布 / Demo 演示", organicViews: 47000, hookScore: 82, completionRateBps: 3900, adScaleScore: 84, adStatus: "testing", paidRevenueCents: 248000, grossProfitCents: 91000, spendCents: 62000 },
+        ],
+    },
 ];
-
 const creatives = [
-  { title: "3s close-up engraving hook", source: "creator", hookScore: 94, completionScore: 86, clickScore: 82, scaleScore: 91, status: "进入投流池" },
-  { title: "His & hers anniversary reveal", source: "organic", hookScore: 88, completionScore: 79, clickScore: 85, scaleScore: 84, status: "小预算测试" },
-  { title: "Factory customization process", source: "organic", hookScore: 66, completionScore: 72, clickScore: 58, scaleScore: 61, status: "AI 给优化建议" },
-  { title: "Luxury gift under $100", source: "ad", hookScore: 90, completionScore: 83, clickScore: 89, scaleScore: 93, status: "建议放量" },
+    { title: "3 秒刻字特写开头（3s close-up engraving hook）", source: "creator", hookScore: 94, completionScore: 86, clickScore: 82, scaleScore: 91, status: "进入投流池" },
+    { title: "情侣纪念日开箱（His & hers anniversary reveal）", source: "organic", hookScore: 88, completionScore: 79, clickScore: 85, scaleScore: 84, status: "小预算测试" },
+    { title: "工厂定制流程（Factory customization process）", source: "organic", hookScore: 66, completionScore: 72, clickScore: 58, scaleScore: 61, status: "AI（人工智能）给优化建议" },
+    { title: "百美元内轻奢礼物（Luxury gift under $100）", source: "ad", hookScore: 90, completionScore: 83, clickScore: 89, scaleScore: 93, status: "建议放量" },
 ];
-
 const ads = [
-  { creative: "Luxury gift under $100", country: "US", spendCents: 182000, revenueCents: 768000, grossProfitCents: 284000, cpaCents: 2590, roasBps: 42200, decision: "预算 +20%，需确认" },
-  { creative: "3s close-up engraving hook", country: "CA", spendCents: 62000, revenueCents: 248000, grossProfitCents: 91000, cpaCents: 2210, roasBps: 40000, decision: "复制到 US lookalike" },
-  { creative: "Factory customization process", country: "DE", spendCents: 54000, revenueCents: 96000, grossProfitCents: 22000, cpaCents: 4870, roasBps: 17800, decision: "暂停并重剪前 3 秒" },
-  { creative: "His & hers anniversary reveal", country: "UK", spendCents: 79000, revenueCents: 236000, grossProfitCents: 78000, cpaCents: 3120, roasBps: 29900, decision: "保留，测试新落地页" },
+    { creative: "百美元内轻奢礼物（Luxury gift under $100）", country: "US", spendCents: 182000, revenueCents: 768000, grossProfitCents: 284000, cpaCents: 2590, roasBps: 42200, decision: "预算 +20%，需确认" },
+    { creative: "3 秒刻字特写开头（3s close-up engraving hook）", country: "CA", spendCents: 62000, revenueCents: 248000, grossProfitCents: 91000, cpaCents: 2210, roasBps: 40000, decision: "复制到 US（美国）相似人群" },
+    { creative: "工厂定制流程（Factory customization process）", country: "DE", spendCents: 54000, revenueCents: 96000, grossProfitCents: 22000, cpaCents: 4870, roasBps: 17800, decision: "暂停并重剪前 3 秒" },
+    { creative: "情侣纪念日开箱（His & hers anniversary reveal）", country: "UK", spendCents: 79000, revenueCents: 236000, grossProfitCents: 78000, cpaCents: 3120, roasBps: 29900, decision: "保留，测试新落地页" },
 ];
-
 const approvals = [
-  { title: "Meta US Campaign 预算 +20%", risk: "high", owner: "老板", detail: "基于真实毛利 ROAS 4.22x，但会增加日消耗 $360，需要人工确认。" },
-  { title: "给 @londonfits 发送英文 DM", risk: "medium", owner: "BD", detail: "AI 已生成个性化话术，发送前需确认品牌口吻和样品承诺。" },
-  { title: "暂停 DE 低效素材", risk: "low", owner: "投流", detail: "CPA 高于目标 38%，素材 3 秒吸引力低于 70 分。" },
-  { title: "订单 AS-1028 定制信息确认", risk: "medium", owner: "客服", detail: "客户刻字字段疑似包含拼写错误，建议发确认邮件。" },
+    { title: "Meta US（美国）广告活动预算 +20%", risk: "high", owner: "老板", detail: "基于真实毛利 ROAS（广告回报）4.22x，但会增加日消耗 $360，需要人工确认。" },
+    { title: "给 @londonfits 发送英文 DM（私信）", risk: "medium", owner: "BD", detail: "AI（人工智能）已生成个性化话术，发送前需确认品牌口吻和样品承诺。" },
+    { title: "暂停 DE（德国）低效素材", risk: "low", owner: "投流", detail: "CPA（获客成本）高于目标 38%，素材 3 秒吸引力低于 70 分。" },
+    { title: "订单 AS-1028 定制信息确认", risk: "medium", owner: "客服", detail: "客户刻字字段疑似包含拼写错误，建议发确认邮件。" },
 ];
-
 const supportThreads = [
-  {
-    id: "thread-livechat-01",
-    channel: "独立站客服",
-    customer: "Emily R.",
-    language: "英文",
-    status: "AI 托管中",
-    risk: "low",
-    lastMessage: "Can I get this watch with a short engraving for my husband?",
-    translated: "我能不能给我丈夫买这块表，并刻一段短文字？",
-    aiDraft: "可以的。请把想刻的英文内容发给我们，并确认收货国家。客服上班后会再次帮您确认刻字格式。",
-    collected: ["购买意向：礼物", "语言：英文", "需求：刻字", "缺少：国家和邮箱"],
-    nextAction: "继续收集邮箱、国家和刻字内容，暂不承诺具体发货时间。",
-  },
-  {
-    id: "thread-email-02",
-    channel: "邮件",
-    customer: "AS-1041 / Mark",
-    language: "英文",
-    status: "待人工接管",
-    risk: "high",
-    lastMessage: "My package is late. I want a refund if it does not arrive tomorrow.",
-    translated: "我的包裹延迟了。如果明天不到，我想退款。",
-    aiDraft: "我已经记录您的订单和物流问题。退款、补偿和具体到达时间需要人工客服核实后处理，客服上班后会优先跟进。",
-    collected: ["订单号：AS-1041", "问题类型：物流延迟", "诉求：可能退款", "风险：退款承诺"],
-    nextAction: "转人工，核对物流轨迹和退款政策。AI 禁止承诺退款或补偿。",
-    orderRef: "AS-1041",
-  },
-  {
-    id: "thread-form-03",
-    channel: "独立站留言",
-    customer: "Lina / Germany",
-    language: "英文",
-    status: "可发草稿",
-    risk: "medium",
-    lastMessage: "Do you ship to Germany and can I pay by PayPal?",
-    translated: "你们发德国吗？可以用 PayPal 付款吗？",
-    aiDraft: "我们已收到您的咨询。请留下邮箱，客服会确认当前德国可用配送方式和付款方式后回复您。",
-    collected: ["国家：德国", "问题：配送和付款方式", "缺少：邮箱"],
-    nextAction: "客服确认德国配送和付款方式后发送正式回复。",
-  },
-  {
-    id: "thread-feishu-04",
-    channel: "飞书提醒",
-    customer: "内部提醒 / 店铺表单",
-    language: "中文",
-    status: "待人工接管",
-    risk: "medium",
-    lastMessage: "客户上传了刻字截图，图片内容需要确认是否能生产。",
-    translated: "客户上传了刻字截图，图片内容需要确认是否能生产。",
-    aiDraft: "已记录图片确认需求。需要客服和生产同事共同确认后再回复客户。",
-    collected: ["问题：图片定制确认", "需要：生产确认", "风险：生产能力承诺"],
-    nextAction: "客服把截图转给生产确认，不允许 AI 直接承诺可以生产。",
-    orderRef: "AS-1028",
-  },
+    {
+        id: "thread-livechat-01",
+        channel: "独立站客服",
+        customer: "Emily R.",
+        language: "英文",
+        status: "AI 托管中",
+        risk: "low",
+        lastMessage: "Can I get this watch with a short engraving for my husband?",
+        translated: "我能不能给我丈夫买这块表，并刻一段短文字？",
+        aiDraft: "可以的。请把想刻的英文内容发给我们，并确认收货国家。客服上班后会再次帮您确认刻字格式。",
+        collected: ["购买意向：礼物", "语言：英文", "需求：刻字", "缺少：国家和邮箱"],
+        nextAction: "继续收集邮箱、国家和刻字内容，暂不承诺具体发货时间。",
+    },
+    {
+        id: "thread-email-02",
+        channel: "邮件",
+        customer: "AS-1041 / Mark",
+        language: "英文",
+        status: "待人工接管",
+        risk: "high",
+        lastMessage: "My package is late. I want a refund if it does not arrive tomorrow.",
+        translated: "我的包裹延迟了。如果明天不到，我想退款。",
+        aiDraft: "我已经记录您的订单和物流问题。退款、补偿和具体到达时间需要人工客服核实后处理，客服上班后会优先跟进。",
+        collected: ["订单号：AS-1041", "问题类型：物流延迟", "诉求：可能退款", "风险：退款承诺"],
+        nextAction: "转人工，核对物流轨迹和退款政策。AI 禁止承诺退款或补偿。",
+        orderRef: "AS-1041",
+    },
+    {
+        id: "thread-form-03",
+        channel: "独立站留言",
+        customer: "Lina / Germany（德国）",
+        language: "英文",
+        status: "可发草稿",
+        risk: "medium",
+        lastMessage: "Do you ship to Germany and can I pay by PayPal?",
+        translated: "你们发德国吗？可以用 PayPal 付款吗？",
+        aiDraft: "我们已收到您的咨询。请留下邮箱，客服会确认当前德国可用配送方式和付款方式后回复您。",
+        collected: ["国家：德国", "问题：配送和付款方式", "缺少：邮箱"],
+        nextAction: "客服确认德国配送和付款方式后发送正式回复。",
+    },
+    {
+        id: "thread-feishu-04",
+        channel: "飞书提醒",
+        customer: "内部提醒 / 店铺表单",
+        language: "中文",
+        status: "待人工接管",
+        risk: "medium",
+        lastMessage: "客户上传了刻字截图，图片内容需要确认是否能生产。",
+        translated: "客户上传了刻字截图，图片内容需要确认是否能生产。",
+        aiDraft: "已记录图片确认需求。需要客服和生产同事共同确认后再回复客户。",
+        collected: ["问题：图片定制确认", "需要：生产确认", "风险：生产能力承诺"],
+        nextAction: "客服把截图转给生产确认，不允许 AI 直接承诺可以生产。",
+        orderRef: "AS-1028",
+    },
 ];
-
 const riskLabels = {
-  low: "低风险",
-  medium: "中风险",
-  high: "高风险",
+    low: "低风险",
+    medium: "中风险",
+    high: "高风险",
 };
-
+const countryLabel = {
+    US: "US（美国）",
+    UK: "UK（英国）",
+    DE: "DE（德国）",
+    FR: "FR（法国）",
+    CA: "CA（加拿大）",
+    AU: "AU（澳大利亚）",
+};
+const videoStatusLabel = {
+    not_ready: "未就绪",
+    test_pool: "测试池",
+    testing: "测试中",
+    scaling: "放量中",
+};
 const handoffItems = [
-  { label: "离线会话", value: "14", detail: "独立站 8 条，邮件 4 条，表单 2 条" },
-  { label: "潜在成交", value: "6", detail: "礼物刻字、德国配送、PayPal 咨询优先处理" },
-  { label: "售后风险", value: "2", detail: "物流延迟和退款诉求必须人工接管" },
-  { label: "AI 自动回复", value: "9", detail: "全部为低风险欢迎、收集信息、上班时间说明" },
+    { label: "离线会话", value: "14", detail: "独立站 8 条，邮件 4 条，表单 2 条" },
+    { label: "潜在成交", value: "6", detail: "礼物刻字、德国配送、PayPal 咨询优先处理" },
+    { label: "售后风险", value: "2", detail: "物流延迟和退款诉求必须人工接管" },
+    { label: "AI（人工智能）自动回复", value: "9", detail: "全部为低风险欢迎、收集信息、上班时间说明" },
 ];
-
-let selectedSupportThreadId = supportThreads[0]?.id || "";
-
+let selectedSupportThreadId = supportThreads[0]?.id ?? "";
 const fmtMoney = (cents) => `$${(cents / 100).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 const fmtRoas = (bps) => `${(bps / 10000).toFixed(2)}x`;
 const fmtPercent = (bps) => `${(bps / 100).toFixed(1)}%`;
-
 const $ = (selector) => {
-  const element = document.querySelector(selector);
-  if (!element) throw new Error(`Missing element: ${selector}`);
-  return element;
+    const element = document.querySelector(selector);
+    if (!element)
+        throw new Error(`Missing element: ${selector}`);
+    return element;
 };
-
 const showToast = (message) => {
-  const toast = $("#toast");
-  toast.textContent = message;
-  toast.classList.add("is-visible");
-  window.setTimeout(() => toast.classList.remove("is-visible"), 2600);
+    const toast = $("#toast");
+    toast.textContent = message;
+    toast.classList.add("is-visible");
+    window.setTimeout(() => toast.classList.remove("is-visible"), 2600);
 };
-
 const switchView = (view) => {
-  if (!roleConfigs[currentRole].allowedViews.includes(view)) {
-    showToast(`${roleConfigs[currentRole].label} 暂无该模块权限。`);
-    view = roleConfigs[currentRole].defaultView;
-  }
-  document.querySelectorAll(".view").forEach((node) => node.classList.remove("is-visible"));
-  document.querySelectorAll(".nav-item").forEach((node) => node.classList.remove("is-active"));
-  $(`#${view}`).classList.add("is-visible");
-  document.querySelector(`.nav-item[data-view="${view}"]`)?.classList.add("is-active");
-  $("#viewTitle").textContent = viewTitles[view];
-  document.body.dataset.currentView = view;
+    if (!roleConfigs[currentRole].allowedViews.includes(view)) {
+        showToast(`${roleConfigs[currentRole].label} 暂无该模块权限。`);
+        view = roleConfigs[currentRole].defaultView;
+    }
+    document.querySelectorAll(".view").forEach((node) => node.classList.remove("is-visible"));
+    document.querySelectorAll(".nav-item").forEach((node) => node.classList.remove("is-active"));
+    $(`#${view}`).classList.add("is-visible");
+    document.querySelector(`.nav-item[data-view="${view}"]`)?.classList.add("is-active");
+    $("#viewTitle").textContent = viewTitles[view];
+    document.body.dataset.currentView = view;
 };
-
 const renderRoleHome = () => {
-  const config = roleConfigs[currentRole];
-  $("#roleHomeTitle").textContent = config.homeTitle;
-  $("#roleHomeBadge").textContent = config.badge;
-  $("#roleDescription").textContent = config.description;
-  $("#roleActionGrid").innerHTML = config.actions
-    .map(
-      (item) => `
+    const config = roleConfigs[currentRole];
+    $("#roleHomeTitle").textContent = config.homeTitle;
+    $("#roleHomeBadge").textContent = config.badge;
+    $("#roleDescription").textContent = config.description;
+    $("#roleActionGrid").innerHTML = config.actions
+        .map((item) => `
       <article class="role-action-card">
         <strong>${item.title}</strong>
         <p>${item.detail}</p>
         <button class="ghost-button" data-view-link="${item.target}">${item.cta}</button>
       </article>
-    `,
-    )
-    .join("");
+    `)
+        .join("");
 };
-
 const applyRole = (role, keepCurrentView = false) => {
-  currentRole = role;
-  const config = roleConfigs[role];
-  document.querySelectorAll(".nav-item[data-view]").forEach((item) => {
-    const itemView = item.dataset.view;
-    const allowed = config.allowedViews.includes(itemView);
-    item.hidden = !allowed;
-  });
-  renderRoleHome();
-  const visibleView = document.querySelector(".view.is-visible")?.id;
-  const nextView = keepCurrentView && visibleView && config.allowedViews.includes(visibleView) ? visibleView : config.defaultView;
-  switchView(nextView);
+    currentRole = role;
+    const config = roleConfigs[role];
+    document.querySelectorAll(".nav-item[data-view]").forEach((item) => {
+        const itemView = item.dataset.view;
+        const allowed = config.allowedViews.includes(itemView);
+        item.hidden = !allowed;
+    });
+    renderRoleHome();
+    const visibleView = document.querySelector(".view.is-visible")?.id;
+    const nextView = keepCurrentView && visibleView && config.allowedViews.includes(visibleView) ? visibleView : config.defaultView;
+    switchView(nextView);
 };
-
 const renderKpis = () => {
-  $("#kpiGrid").innerHTML = kpis
-    .map(
-      (item) => `
+    $("#kpiGrid").innerHTML = kpis
+        .map((item) => `
       <article class="metric-card">
         <p class="eyebrow">${item.label}</p>
         <strong>${item.value}</strong>
         <small class="${item.direction === "up" ? "trend-up" : "trend-down"}">${item.delta}</small>
       </article>
-    `,
-    )
-    .join("");
+    `)
+        .join("");
 };
-
 const renderCountries = () => {
-  $("#countryTable").innerHTML = `
-    <div class="table-row header"><span>国家</span><span>花费</span><span>收入</span><span>CPA</span><span>ROAS</span></div>
+    $("#countryTable").innerHTML = `
+    <div class="table-row header"><span>国家</span><span>花费</span><span>收入</span><span>CPA（获客成本）</span><span>ROAS（广告回报）</span></div>
     ${countries
-      .map(
-        (row) => `
+        .map((row) => `
       <div class="table-row">
-        <strong>${row.country}</strong>
+        <strong>${countryLabel[row.country] ?? row.country}</strong>
         <span>${fmtMoney(row.spendCents)}</span>
         <span>${fmtMoney(row.revenueCents)}</span>
         <span>${fmtMoney(row.cpaCents)}</span>
         <span>${fmtRoas(row.roasBps)}</span>
       </div>
-    `,
-      )
-      .join("")}
+    `)
+        .join("")}
   `;
 };
-
 const renderActions = () => {
-  $("#dailyActions").innerHTML = approvals
-    .slice(0, 3)
-    .map(
-      (item) => `
+    $("#dailyActions").innerHTML = approvals
+        .slice(0, 3)
+        .map((item) => `
       <article class="approval-card">
         <header>
           <strong>${item.title}</strong>
@@ -369,17 +353,15 @@ const renderActions = () => {
         </header>
         <p>${item.owner} · ${item.detail}</p>
       </article>
-    `,
-    )
-    .join("");
+    `)
+        .join("");
 };
-
 const renderConnectors = () => {
-  const saved = JSON.parse(localStorage.getItem("atomi.integrations") || "{}");
-  $("#connectorGrid").innerHTML = integrations
-    .map((item) => {
-      const value = saved[item.id] || "";
-      return `
+    const saved = JSON.parse(localStorage.getItem("atomi.integrations") || "{}");
+    $("#connectorGrid").innerHTML = integrations
+        .map((item) => {
+        const value = saved[item.id] || "";
+        return `
         <article class="connector-card">
           <div class="section-head">
             <div>
@@ -395,35 +377,31 @@ const renderConnectors = () => {
         </article>
       `;
     })
-    .join("");
+        .join("");
 };
-
 const renderCreators = () => {
-  $("#creatorGrid").innerHTML = creators
-    .map(
-      (item) => `
+    $("#creatorGrid").innerHTML = creators
+        .map((item) => `
       <article class="data-card">
         <header>
           <strong>${item.handle}</strong>
           <span class="status-pill status-demo">${item.aiScore}</span>
         </header>
-        <p class="muted">${item.platform} · ${item.country} · ${item.followers.toLocaleString("en-US")} followers</p>
+        <p class="muted">${item.platform} · ${countryLabel[item.country] ?? item.country} · ${item.followers.toLocaleString("en-US")} 粉丝（followers）</p>
         <p>${item.status}</p>
         <div class="score-bar"><span style="width:${item.aiScore}%"></span></div>
         <div class="tag-row">${item.tags.map((tag) => `<span class="tag">${tag}</span>`).join("")}</div>
         <button class="ghost-button card-action" data-creator-detail="${item.handle}">查看合作链路</button>
       </article>
-    `,
-    )
-    .join("");
+    `)
+        .join("");
 };
-
 const renderCreatorDetail = (creatorId = selectedCreatorId) => {
-  selectedCreatorId = creatorId;
-  const creator = creators.find((item) => item.handle === creatorId) || creators[0];
-  const detail = creatorDetails.find((item) => item.creatorId === creator.handle) || creatorDetails[0];
-  $("#creatorDetailTitle").textContent = `${creator.handle} 合作链路`;
-  $("#creatorDetailBody").innerHTML = `
+    selectedCreatorId = creatorId;
+    const creator = creators.find((item) => item.handle === creatorId) ?? creators[0];
+    const detail = creatorDetails.find((item) => item.creatorId === creator.handle) ?? creatorDetails[0];
+    $("#creatorDetailTitle").textContent = `${creator.handle} 合作链路`;
+    $("#creatorDetailBody").innerHTML = `
     <div class="creator-detail-grid">
       <section class="panel creator-profile">
         <div class="section-head">
@@ -433,7 +411,7 @@ const renderCreatorDetail = (creatorId = selectedCreatorId) => {
           </div>
           <span class="score-pill">${creator.aiScore}/100</span>
         </div>
-        <p class="muted">${creator.platform} · ${creator.country} · ${creator.followers.toLocaleString("en-US")} followers · ${creator.status}</p>
+        <p class="muted">${creator.platform} · ${countryLabel[creator.country] ?? creator.country} · ${creator.followers.toLocaleString("en-US")} 粉丝（followers） · ${creator.status}</p>
         <p>${detail.recommendation}</p>
         <div class="tag-row">${creator.tags.map((tag) => `<span class="tag">${tag}</span>`).join("")}</div>
       </section>
@@ -443,7 +421,7 @@ const renderCreatorDetail = (creatorId = selectedCreatorId) => {
         <h3>${detail.nextAction}</h3>
         <div class="approval-card inline-action">
           <strong>建议动作</strong>
-          <p>生成 follow-up / 授权确认 / 寄样提醒，进入人工确认后再发送。</p>
+          <p>生成跟进话术（follow-up）、授权确认或寄样提醒，进入人工确认后再发送。</p>
           <button class="primary-button" id="creatorNextAction">生成下一步话术</button>
         </div>
       </section>
@@ -465,67 +443,63 @@ const renderCreatorDetail = (creatorId = selectedCreatorId) => {
       <div class="section-head">
         <div>
           <p class="eyebrow">视频产出与投流联动</p>
-          <h3>达人视频先变成 Creative Asset，再进入广告测试</h3>
+          <h3>达人视频先变成 Creative Asset（可投放素材），再进入广告测试</h3>
         </div>
         <button class="ghost-button" data-view-link="creatives">查看内容中心</button>
       </div>
       <div class="video-grid">
         ${detail.videos
-          .map(
-            (video) => `
+        .map((video) => `
           <article class="creative-card">
             <header>
               <strong>${video.title}</strong>
-              <span class="status-pill status-demo">${video.adStatus}</span>
+              <span class="status-pill status-demo">${videoStatusLabel[video.adStatus] ?? video.adStatus}</span>
             </header>
             <p>${video.url}</p>
             <div class="tag-row">
-              <span class="tag">Organic ${video.organicViews.toLocaleString("en-US")}</span>
-              <span class="tag">Hook ${video.hookScore}</span>
+              <span class="tag">Organic（自然流量）${video.organicViews.toLocaleString("en-US")}</span>
+              <span class="tag">Hook（开头吸引力）${video.hookScore}</span>
               <span class="tag">完播 ${fmtPercent(video.completionRateBps)}</span>
-              <span class="tag">Scale ${video.adScaleScore}</span>
+              <span class="tag">Scale（放量）${video.adScaleScore}</span>
             </div>
             <div class="roi-strip">
-              <span>Spend ${fmtMoney(video.spendCents)}</span>
-              <span>Paid GMV ${fmtMoney(video.paidRevenueCents)}</span>
-              <span>Gross Profit ${fmtMoney(video.grossProfitCents)}</span>
+              <span>Spend（花费）${fmtMoney(video.spendCents)}</span>
+              <span>Paid GMV（广告成交额）${fmtMoney(video.paidRevenueCents)}</span>
+              <span>Gross Profit（毛利）${fmtMoney(video.grossProfitCents)}</span>
             </div>
           </article>
-        `,
-          )
-          .join("")}
+        `)
+        .join("")}
       </div>
     </section>
 
     <section class="panel">
       <div class="section-head">
         <div>
-          <p class="eyebrow">达人 ROI 摘要</p>
-          <h3>完整广告 ROI 仍在广告驾驶舱统一分析</h3>
+          <p class="eyebrow">达人 ROI（投入产出）摘要</p>
+          <h3>完整广告 ROI（投入产出）仍在广告驾驶舱统一分析</h3>
         </div>
-        <button class="primary-button" data-view-link="ads">查看完整广告 ROI</button>
+        <button class="primary-button" data-view-link="ads">查看完整广告 ROI（投入产出）</button>
       </div>
       <div class="roi-summary">
         <article><span>总成本</span><strong>${fmtMoney(detail.totalCostCents)}</strong></article>
         <article><span>寄样成本</span><strong>${fmtMoney(detail.sampleCostCents)}</strong></article>
         <article><span>达人费用</span><strong>${fmtMoney(detail.creatorFeeCents)}</strong></article>
-        <article><span>自然 GMV</span><strong>${fmtMoney(detail.organicRevenueCents)}</strong></article>
-        <article><span>投流 GMV</span><strong>${fmtMoney(detail.paidRevenueCents)}</strong></article>
-        <article><span>毛利 ROI</span><strong>${fmtRoas(detail.roiBps)}</strong></article>
+        <article><span>自然 GMV（自然成交额）</span><strong>${fmtMoney(detail.organicRevenueCents)}</strong></article>
+        <article><span>投流 GMV（广告成交额）</span><strong>${fmtMoney(detail.paidRevenueCents)}</strong></article>
+        <article><span>毛利 ROI（投入产出）</span><strong>${fmtRoas(detail.roiBps)}</strong></article>
       </div>
     </section>
   `;
-
-  $("#creatorNextAction").addEventListener("click", () => {
-    showToast("已生成 BD 下一步话术，发送前仍需人工确认。");
-  });
+    $("#creatorNextAction").addEventListener("click", () => {
+        showToast("已生成 BD 下一步话术，发送前仍需人工确认。");
+    });
 };
-
 const renderCreatives = () => {
-  $("#creativeBoard").innerHTML = creatives
-    .map((item) => {
-      const avg = Math.round((item.hookScore + item.completionScore + item.clickScore + item.scaleScore) / 4);
-      return `
+    $("#creativeBoard").innerHTML = creatives
+        .map((item) => {
+        const avg = Math.round((item.hookScore + item.completionScore + item.clickScore + item.scaleScore) / 4);
+        return `
         <article class="creative-card">
           <header>
             <strong>${item.title}</strong>
@@ -533,26 +507,24 @@ const renderCreatives = () => {
           </header>
           <p>${item.status}</p>
           <div class="tag-row">
-            <span class="tag">Hook ${item.hookScore}</span>
-            <span class="tag">Completion ${item.completionScore}</span>
-            <span class="tag">Click ${item.clickScore}</span>
-            <span class="tag">Scale ${item.scaleScore}</span>
+            <span class="tag">Hook（开头吸引力）${item.hookScore}</span>
+            <span class="tag">Completion（完播）${item.completionScore}</span>
+            <span class="tag">Click（点击）${item.clickScore}</span>
+            <span class="tag">Scale（放量）${item.scaleScore}</span>
           </div>
         </article>
       `;
     })
-    .join("");
+        .join("");
 };
-
 const renderAds = () => {
-  $("#adTable").innerHTML = `
-    <div class="table-row header"><span>素材</span><span>国家</span><span>花费</span><span>收入</span><span>毛利</span><span>CPA</span><span>ROAS</span><span>AI 决策</span></div>
+    $("#adTable").innerHTML = `
+    <div class="table-row header"><span>素材</span><span>国家</span><span>花费</span><span>收入</span><span>毛利</span><span>CPA（获客成本）</span><span>ROAS（广告回报）</span><span>AI（人工智能）决策</span></div>
     ${ads
-      .map(
-        (row) => `
+        .map((row) => `
       <div class="table-row">
         <strong>${row.creative}</strong>
-        <span>${row.country}</span>
+        <span>${countryLabel[row.country] ?? row.country}</span>
         <span>${fmtMoney(row.spendCents)}</span>
         <span>${fmtMoney(row.revenueCents)}</span>
         <span>${fmtMoney(row.grossProfitCents)}</span>
@@ -560,31 +532,25 @@ const renderAds = () => {
         <span>${fmtRoas(row.roasBps)}</span>
         <span>${row.decision}</span>
       </div>
-    `,
-      )
-      .join("")}
+    `)
+        .join("")}
   `;
 };
-
 const renderSupportHub = (threadId = selectedSupportThreadId) => {
-  selectedSupportThreadId = threadId;
-  const activeThread = supportThreads.find((item) => item.id === selectedSupportThreadId) || supportThreads[0];
-
-  $("#supportOverview").innerHTML = handoffItems
-    .map(
-      (item) => `
+    selectedSupportThreadId = threadId;
+    const activeThread = supportThreads.find((item) => item.id === selectedSupportThreadId) ?? supportThreads[0];
+    $("#supportOverview").innerHTML = handoffItems
+        .map((item) => `
       <article class="metric-card">
         <p class="eyebrow">${item.label}</p>
         <strong>${item.value}</strong>
         <small>${item.detail}</small>
       </article>
-    `,
-    )
-    .join("");
-
-  $("#supportThreads").innerHTML = supportThreads
-    .map((item) => {
-      return `
+    `)
+        .join("");
+    $("#supportThreads").innerHTML = supportThreads
+        .map((item) => {
+        return `
         <button class="support-thread-card ${item.id === activeThread.id ? "is-active" : ""}" data-support-thread="${item.id}">
           <span class="support-channel">${item.channel}</span>
           <strong>${item.customer}</strong>
@@ -593,9 +559,8 @@ const renderSupportHub = (threadId = selectedSupportThreadId) => {
         </button>
       `;
     })
-    .join("");
-
-  $("#supportDetail").innerHTML = `
+        .join("");
+    $("#supportDetail").innerHTML = `
     <article class="support-detail-card">
       <header>
         <div>
@@ -609,16 +574,17 @@ const renderSupportHub = (threadId = selectedSupportThreadId) => {
       </header>
 
       <div class="message-box">
-        <span>客户原文</span>
+        <span>客户原文（Original message）</span>
         <p>${activeThread.lastMessage}</p>
       </div>
       <div class="message-box">
-        <span>精准口语翻译</span>
+        <span>精准口语翻译（Chinese translation）</span>
         <p>${activeThread.translated}</p>
       </div>
       <div class="message-box ai-draft">
-        <span>AI 回复草稿</span>
+        <span>AI（人工智能）回复草稿</span>
         <p>${activeThread.aiDraft}</p>
+        <small>中文审核说明：外语回复只作为客服审核草稿，真实发送前必须由人工确认。</small>
       </div>
 
       <div class="collected-list">
@@ -636,47 +602,39 @@ const renderSupportHub = (threadId = selectedSupportThreadId) => {
       </footer>
     </article>
   `;
-
-  $("#handoffReport").innerHTML = [
-    ["今日优先处理", "物流延迟、退款诉求、生产能力确认，全部需要人工接管。"],
-    ["可继续托管", "欢迎语、询问订单号、收集邮箱、收集截图、说明客服上班时间。"],
-    ["禁止自动回复", "退款、补偿、改价、取消订单、承诺具体发货或到达时间。"],
-  ]
-    .map(
-      ([title, detail]) => `
+    $("#handoffReport").innerHTML = [
+        ["今日优先处理", "物流延迟、退款诉求、生产能力确认，全部需要人工接管。"],
+        ["可继续托管", "欢迎语、询问订单号、收集邮箱、收集截图、说明客服上班时间。"],
+        ["禁止自动回复", "退款、补偿、改价、取消订单、承诺具体发货或到达时间。"],
+    ]
+        .map(([title, detail]) => `
       <article class="handoff-card">
         <strong>${title}</strong>
         <p>${detail}</p>
       </article>
-    `,
-    )
-    .join("");
+    `)
+        .join("");
 };
-
 const renderOrders = () => {
-  const steps = [
-    ["下单", "订单与渠道归因入库，金额用整数分存储。"],
-    ["定制确认", "AI 抽取图案、刻字、颜色、尺寸，异常字段进入客服待办。"],
-    ["生产与质检", "生产状态和图片文件进入 S3，CloudFront 分发给客服预览。"],
-    ["物流与售后", "物流 API 追踪签收，延迟、丢件、退货风险自动预警。"],
-  ];
-  $("#orderTimeline").innerHTML = steps
-    .map(
-      ([title, detail]) => `
+    const steps = [
+        ["下单", "订单与渠道归因入库，金额用整数分存储。"],
+        ["定制确认", "AI 抽取图案、刻字、颜色、尺寸，异常字段进入客服待办。"],
+        ["生产与质检", "生产状态和图片文件进入 S3（对象存储），CloudFront（内容分发）分发给客服预览。"],
+        ["物流与售后", "物流 API（接口）追踪签收，延迟、丢件、退货风险自动预警。"],
+    ];
+    $("#orderTimeline").innerHTML = steps
+        .map(([title, detail]) => `
       <article class="order-step">
         <p class="eyebrow">${title}</p>
         <h3>${title}</h3>
         <p>${detail}</p>
       </article>
-    `,
-    )
-    .join("");
+    `)
+        .join("");
 };
-
 const renderApprovals = () => {
-  $("#approvalList").innerHTML = approvals
-    .map(
-      (item) => `
+    $("#approvalList").innerHTML = approvals
+        .map((item) => `
       <article class="approval-card">
         <header>
           <strong>${item.title}</strong>
@@ -688,104 +646,100 @@ const renderApprovals = () => {
           <button class="primary-button" data-approve="${item.title}">确认</button>
         </footer>
       </article>
-    `,
-    )
-    .join("");
+    `)
+        .join("");
 };
-
 const bindEvents = () => {
-  document.querySelectorAll("[data-view], [data-view-link]").forEach((node) => {
-    node.addEventListener("click", () => {
-      const view = node.dataset.view || node.dataset.viewLink;
-      switchView(view);
+    document.querySelectorAll("[data-view], [data-view-link]").forEach((node) => {
+        node.addEventListener("click", () => {
+            const view = (node.dataset.view || node.dataset.viewLink);
+            switchView(view);
+        });
     });
-  });
-
-  $("#modeToggle").addEventListener("change", (event) => {
-    const live = event.target.checked;
-    $("#modeLabel").textContent = live ? "真实模式" : "Demo 模式";
-    showToast(live ? "已切换真实模式：请先完成平台连接和权限配置。" : "已切回 Demo 模式：使用模拟数据演示。");
-  });
-
-  $("#roleSelect").addEventListener("change", (event) => {
-    const role = event.target.value;
-    applyRole(role);
-    showToast(`已切换为 ${roleConfigs[role].label} 视图。`);
-  });
-
-  $("#saveIntegrations").addEventListener("click", () => {
-    const values = {};
-    document.querySelectorAll("[data-integration]").forEach((input) => {
-      values[input.dataset.integration || ""] = input.value.trim();
+    $("#modeToggle").addEventListener("change", (event) => {
+        const live = event.target.checked;
+        $("#modeLabel").textContent = live ? "真实模式" : "Demo 模式";
+        showToast(live ? "已切换真实模式：请先完成平台连接和权限配置。" : "已切回 Demo 模式：使用模拟数据演示。");
     });
-    localStorage.setItem("atomi.integrations", JSON.stringify(values));
-    renderConnectors();
-    showToast("连接信息已保存到本地演示环境。真实版需后端加密存储 secrets。");
-  });
-
-  $("#csvInput").addEventListener("change", async (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const text = await file.text();
-    const rows = text.split(/\r?\n/).slice(0, 6).join("\n");
-    $("#csvPreview").textContent = rows || "CSV 为空";
-    showToast("CSV 已读取，可进入字段映射与数据校验流程。");
-  });
-
-  $("#refreshButton").addEventListener("click", () => showToast("模拟数据已刷新。真实版会触发受限速保护的同步任务。"));
-  $("#generateDm").addEventListener("click", () => showToast("已生成英文 DM 草稿，等待 BD 确认后发送。"));
-  $("#scoreCreative").addEventListener("click", () => showToast("素材评分已更新，高分素材进入投流池。"));
-  $("#draftBudget").addEventListener("click", () => showToast("预算建议已进入 AI 确认中心，不会自动改广告预算。"));
-  $("#probeIntegrations").addEventListener("click", () => showToast("已进入连接准备流程。真实版会跳转官方授权页，Demo 不会写入真实密钥。"));
-  $("#simulateSupportMessage").addEventListener("click", () => showToast("已模拟一条独立站客服消息进入队列，真实版需走渠道 webhook 和审计日志。"));
-  $("#structureOrders").addEventListener("click", () => showToast("定制字段已结构化，异常订单进入客服队列。"));
-  $("#approveAll").addEventListener("click", () => showToast("低风险动作已批准，高风险预算动作仍需老板确认。"));
-  $("#runGdpr").addEventListener("click", () => {
-    const identity = $("#gdprIdentity").value.trim();
-    const mode = $("#gdprMode").value;
-    $("#gdprResult").textContent = identity
-      ? `已为 ${identity} 创建 GDPR ${mode === "delete" ? "全链路删除" : "匿名化"}工单：将覆盖订单、客服、广告受众、AI 训练样本和审计日志。`
-      : "请先输入 email / phone / customerId。";
-  });
-
-  document.addEventListener("click", (event) => {
-    const target = event.target;
-    const actionTarget =
-      target.closest?.("[data-approve], [data-reject], [data-creator-detail], [data-view-link], [data-support-thread], [data-draft-support], [data-escalate-support]") || target;
-    const approved = actionTarget.dataset?.approve;
-    const rejected = actionTarget.dataset?.reject;
-    const creatorId = actionTarget.dataset?.creatorDetail;
-    const viewLink = actionTarget.dataset?.viewLink;
-    const supportThreadId = actionTarget.dataset?.supportThread;
-    const supportDraftId = actionTarget.dataset?.draftSupport;
-    const supportEscalateId = actionTarget.dataset?.escalateSupport;
-    if (approved) showToast(`已确认：${approved}`);
-    if (rejected) showToast(`已驳回：${rejected}`);
-    if (viewLink) switchView(viewLink);
-    if (supportThreadId) renderSupportHub(supportThreadId);
-    if (supportDraftId) showToast("AI 回复草稿已保存，真实发送前必须由客服确认。");
-    if (supportEscalateId) showToast("已标记转人工，客服上班后会在托管日报中优先处理。");
-    if (creatorId) {
-      renderCreatorDetail(creatorId);
-      switchView("creatorDetail");
-    }
-  });
+    $("#roleSelect").addEventListener("change", (event) => {
+        const role = event.target.value;
+        applyRole(role);
+        showToast(`已切换为 ${roleConfigs[role].label} 视图。`);
+    });
+    $("#saveIntegrations").addEventListener("click", () => {
+        const values = {};
+        document.querySelectorAll("[data-integration]").forEach((input) => {
+            values[input.dataset.integration || ""] = input.value.trim();
+        });
+        localStorage.setItem("atomi.integrations", JSON.stringify(values));
+        renderConnectors();
+        showToast("连接信息已保存到本地演示环境。真实版需后端加密存储 secrets（密钥）。");
+    });
+    $("#csvInput").addEventListener("change", async (event) => {
+        const file = event.target.files?.[0];
+        if (!file)
+            return;
+        const text = await file.text();
+        const rows = text.split(/\r?\n/).slice(0, 6).join("\n");
+        $("#csvPreview").textContent = rows || "CSV（表格文件）为空";
+        showToast("CSV（表格文件）已读取，可进入字段映射与数据校验流程。");
+    });
+    $("#refreshButton").addEventListener("click", () => showToast("模拟数据已刷新。真实版会触发受限速保护的同步任务。"));
+    $("#generateDm").addEventListener("click", () => showToast("已生成英文 DM（私信）草稿，等待 BD（商务拓展）确认后发送。"));
+    $("#scoreCreative").addEventListener("click", () => showToast("素材评分已更新，高分素材进入投流池。"));
+    $("#draftBudget").addEventListener("click", () => showToast("预算建议已进入 AI（人工智能）确认中心，不会自动改广告预算。"));
+    $("#probeIntegrations").addEventListener("click", () => showToast("已进入连接准备流程。真实版会跳转官方授权页，Demo 不会写入真实密钥。"));
+    $("#simulateSupportMessage").addEventListener("click", () => showToast("已模拟一条独立站客服消息进入队列，真实版需走渠道 webhook（平台回调）和审计日志。"));
+    $("#structureOrders").addEventListener("click", () => showToast("定制字段已结构化，异常订单进入客服队列。"));
+    $("#approveAll").addEventListener("click", () => showToast("低风险动作已批准，高风险预算动作仍需老板确认。"));
+    $("#runGdpr").addEventListener("click", () => {
+        const identity = $("#gdprIdentity").value.trim();
+        const mode = $("#gdprMode").value;
+        $("#gdprResult").textContent = identity
+            ? `已为 ${identity} 创建 GDPR（欧盟隐私合规）${mode === "delete" ? "全链路删除" : "匿名化"}工单：将覆盖订单、客服、广告受众、AI（人工智能）训练样本和审计日志。`
+            : "请先输入 email（邮箱）/ phone（手机号）/ customerId（客户ID）。";
+    });
+    document.addEventListener("click", (event) => {
+        const target = event.target;
+        const actionTarget = target.closest("[data-approve], [data-reject], [data-creator-detail], [data-view-link], [data-support-thread], [data-draft-support], [data-escalate-support]") ?? target;
+        const approved = actionTarget.dataset.approve;
+        const rejected = actionTarget.dataset.reject;
+        const creatorId = actionTarget.dataset.creatorDetail;
+        const viewLink = actionTarget.dataset.viewLink;
+        const supportThreadId = actionTarget.dataset.supportThread;
+        const supportDraftId = actionTarget.dataset.draftSupport;
+        const supportEscalateId = actionTarget.dataset.escalateSupport;
+        if (approved)
+            showToast(`已确认：${approved}`);
+        if (rejected)
+            showToast(`已驳回：${rejected}`);
+        if (viewLink)
+            switchView(viewLink);
+        if (supportThreadId)
+            renderSupportHub(supportThreadId);
+        if (supportDraftId)
+            showToast("AI（人工智能）回复草稿已保存，真实发送前必须由客服确认。");
+        if (supportEscalateId)
+            showToast("已标记转人工，客服上班后会在托管日报中优先处理。");
+        if (creatorId) {
+            renderCreatorDetail(creatorId);
+            switchView("creatorDetail");
+        }
+    });
 };
-
 const init = () => {
-  renderKpis();
-  renderCountries();
-  renderActions();
-  renderConnectors();
-  renderCreators();
-  renderCreatorDetail();
-  renderCreatives();
-  renderAds();
-  renderSupportHub();
-  renderOrders();
-  renderApprovals();
-  applyRole(currentRole, true);
-  bindEvents();
+    renderKpis();
+    renderCountries();
+    renderActions();
+    renderConnectors();
+    renderCreators();
+    renderCreatorDetail();
+    renderCreatives();
+    renderAds();
+    renderSupportHub();
+    renderOrders();
+    renderApprovals();
+    applyRole(currentRole, true);
+    bindEvents();
 };
-
 init();
