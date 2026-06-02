@@ -17,6 +17,31 @@ type IntegrationReadiness = {
   nextStepZh: string;
 };
 
+const liveModePrerequisites = [
+  "官方只读接口权限",
+  "密钥加密存储",
+  "同步日志",
+  "失败重试记录",
+  "人工审核",
+  "操作审计",
+];
+
+const currentlyForbiddenActions = [
+  "保存真实密钥",
+  "读取真实客户资料",
+  "创建真实平台连接",
+  "自动发送客户消息",
+  "绕过人工审核",
+];
+
+const credentialPolicy = {
+  serverSideOnly: true,
+  plaintextReturned: false,
+  realCredentialSaveAllowed: false,
+  readinessEndpoint: "/api/integrations/credential-readiness",
+  noteZh: "真实接入前必须先通过凭证管理预检。当前只允许 Demo 探测和沙箱验证。",
+};
+
 const integrationSchema = z.object({
   provider: z.enum(["shopify", "meta_ads", "tiktok_ads", "instagram_graph", "logistics", "support", "csv"]),
   accountRef: z.string().min(2),
@@ -42,7 +67,7 @@ const providerReadiness: Record<Provider, IntegrationReadiness> = {
     placeholderExample: "your-store.myshopify.com",
     requiredFields: ["店铺域名", "测试订单号", "商品 SKU 样例"],
     safeTestInputs: ["测试店铺域名", "SANDBOX 订单号", "演示商品 SKU"],
-    forbiddenInputs: ["真实 Shopify Admin Token", "真实客户订单", "真实客户邮箱或手机号"],
+    forbiddenInputs: ["真实 Shopify 管理后台访问凭证", "真实客户订单", "真实客户邮箱或手机号"],
     allowedActions: ["连接前置检查", "读取 Demo 订单样例", "整理字段映射"],
     firstPhaseGoal: "先验证独立站订单、客户、商品字段能进入统一数据模型。",
     nextStepZh: "先用测试店铺域名和假订单号做字段映射，不接真实店铺密钥。",
@@ -51,7 +76,7 @@ const providerReadiness: Record<Provider, IntegrationReadiness> = {
     placeholderExample: "act_1234567890",
     requiredFields: ["广告账户 ID", "币种", "时区", "测试日期范围"],
     safeTestInputs: ["演示广告账户 ID", "假投放数据", "测试日期范围"],
-    forbiddenInputs: ["真实 Meta Access Token", "真实广告花费明细", "真实客户受众数据"],
+    forbiddenInputs: ["真实 Meta 访问凭证", "真实广告花费明细", "真实客户受众数据"],
     allowedActions: ["读取 Demo 广告指标", "整理 ROAS/CPA 字段", "标记素材表现风险"],
     firstPhaseGoal: "先验证广告驾驶舱需要哪些指标，不做真实广告账号写入。",
     nextStepZh: "先固化指标字段，再确认 Meta 官方权限和只读范围。",
@@ -60,7 +85,7 @@ const providerReadiness: Record<Provider, IntegrationReadiness> = {
     placeholderExample: "advertiser_id_123456789",
     requiredFields: ["Advertiser ID（广告主 ID）", "币种", "时区", "投放目标"],
     safeTestInputs: ["演示广告主 ID", "假素材 ID", "测试投放指标"],
-    forbiddenInputs: ["真实 TikTok Ads Token", "真实消耗数据", "真实用户转化数据"],
+    forbiddenInputs: ["真实 TikTok Ads 访问凭证", "真实消耗数据", "真实用户转化数据"],
     allowedActions: ["读取 Demo 投流指标", "整理素材和广告关联", "生成投流分析草稿"],
     firstPhaseGoal: "先把 TikTok 投流数据结构对齐素材投流中心。",
     nextStepZh: "先用假数据跑通字段，真实权限等二期再确认。",
@@ -69,7 +94,7 @@ const providerReadiness: Record<Provider, IntegrationReadiness> = {
     placeholderExample: "17841400000000000",
     requiredFields: ["Business Account ID（商业账号 ID）", "内容类型", "互动指标", "测试日期范围"],
     safeTestInputs: ["演示商业账号 ID", "假帖子 ID", "测试互动数据"],
-    forbiddenInputs: ["真实 Instagram Graph Token", "真实私信", "真实粉丝隐私数据"],
+    forbiddenInputs: ["真实 Instagram Graph 访问凭证", "真实私信", "真实粉丝隐私数据"],
     allowedActions: ["读取 Demo 内容表现", "整理互动指标", "关联达人或素材记录"],
     firstPhaseGoal: "先验证社媒内容和素材表现如何进入运营看板。",
     nextStepZh: "先只做内容指标字段，不接真实私信。",
@@ -123,6 +148,9 @@ const buildCsvUpload = (dataState: "demo" | "postgres_sandbox", dataStateLabelZh
   acceptedFormats: [".csv"],
   maxFileSizeMb: 10,
   requiredColumns: ["数据类型", "业务日期", "订单号或素材 ID", "金额或状态字段"],
+  liveModePrerequisites,
+  currentlyForbiddenActions,
+  credentialPolicy,
   ...providerReadiness.csv,
 });
 
@@ -182,6 +210,9 @@ const readPostgresIntegrations = async () => {
         dataStateLabelZh: "PostgreSQL 沙箱数据",
         rateLimitState: row.rateLimitState,
         circuitState: row.circuitState,
+        liveModePrerequisites,
+        currentlyForbiddenActions,
+        credentialPolicy,
         ...providerReadiness[provider],
       };
     })
@@ -246,6 +277,9 @@ export async function GET(request: Request) {
     statusLabelZh: "Demo 连接",
     dataState: "demo",
     dataStateLabelZh: "Demo 数据",
+    liveModePrerequisites,
+    currentlyForbiddenActions,
+    credentialPolicy,
     ...providerReadiness[integration.provider],
   }));
 

@@ -15,6 +15,14 @@ const SYNC_QUEUE_NAME = "provider-sync";
 
 type SyncAuditStatus = "queued" | "skipped" | "failed";
 
+const syncStatusLabelsZh: Record<string, string> = {
+  queued: "已排队",
+  running: "运行中",
+  succeeded: "已完成",
+  failed: "失败",
+  skipped: "已跳过",
+};
+
 type SyncAuditDraft = {
   provider: z.infer<typeof syncSchema>["provider"];
   status: SyncAuditStatus;
@@ -189,6 +197,7 @@ const mapSyncRun = (row: SyncRunRow) => ({
   id: row.id,
   provider: row.provider,
   status: row.status,
+  statusLabelZh: syncStatusLabelsZh[row.status] ?? "未知状态",
   mode: row.mode,
   requestedBy: row.requestedBy,
   queueName: row.queueName,
@@ -244,6 +253,7 @@ const getDemoSyncRuns = () => [
     id: "demo_sync_run_shopify_skipped",
     provider: "shopify",
     status: "skipped",
+    statusLabelZh: syncStatusLabelsZh.skipped,
     mode: "demo",
     requestedBy: "demo:admin",
     queueName: SYNC_QUEUE_NAME,
@@ -265,6 +275,7 @@ const getDemoSyncRuns = () => [
     id: "demo_sync_run_support_queued",
     provider: "support",
     status: "queued",
+    statusLabelZh: syncStatusLabelsZh.queued,
     mode: "demo",
     requestedBy: "demo:admin",
     queueName: SYNC_QUEUE_NAME,

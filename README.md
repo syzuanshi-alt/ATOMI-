@@ -81,6 +81,7 @@ GET http://127.0.0.1:4173/api/support/repository-status
 PostgreSQL 当前只支持低风险沙箱能力：
 
 - 可以读取：客服渠道接入前置清单，用于确认独立站、表单、邮件、飞书等低难度渠道先测试，企业微信、WhatsApp、抖音、TikTok 等渠道等待官方权限。
+- 可以读取：凭证管理预检状态，用于确认加密配置是否具备真实接入前准备条件，但不返回任何环境变量原文或明文凭证。
 - 可以读取：统一客服会话列表、会话详情、离线托管日报。
 - 可以读取：AI 客服托管闭环汇总，用于检查会话、草稿、审批、审计和日报是否完整。
 - 可以写入：生成沙箱 AI 草稿，写入 `ai_reply_suggestions`、`ai_outputs` 和 `audit_logs`。
@@ -104,6 +105,7 @@ docker compose up -d postgres
 copy .env.example .env.local
 npm run db:schema:check
 npm run db:support:seed
+npm run smoke:credentials
 npm run smoke:support:postgres
 npm run smoke:integrations:postgres-api
 npm run smoke:sync:postgres-api
@@ -114,6 +116,7 @@ npm run smoke:sync:worker:postgres
 
 - `npm run db:schema:check`：执行并检查 `db/schema.sql`，确认关键表存在，客服表有 `tenant_id`。
 - `npm run db:support:seed`：重置 Demo 租户下的 AI 沙箱记录，并写入本地假租户、假客户、假客服会话、假 AI 草稿。
+- `npm run smoke:credentials`：检查 `/api/integrations/credential-readiness`，确认管理员可看凭证预检、客服被拦截、响应值不外露敏感内容。
 - `npm run smoke:support:postgres`：按 `tenant_id` 查询沙箱客服数据和数据接入沙箱连接，并检查没有真实邮箱域名或真实密钥。
 - `npm run smoke:integrations`：检查数据接入配置草案、CSV 上传配置和权限护栏。
 - `npm run smoke:integrations:postgres-api`：检查 PostgreSQL 模式下 `/api/integrations` 是否从本地沙箱表读取，并确认密钥不外露。
@@ -156,6 +159,7 @@ node .\node_modules\next\dist\bin\next start -H 127.0.0.1 -p 4174
 
 ```bash
 npm run smoke:support:postgres-api
+npm run smoke:credentials
 npm run smoke:integrations:postgres-api
 npm run smoke:sync:postgres-api
 npm run smoke:sync:worker:postgres
@@ -165,6 +169,7 @@ npm run smoke:sync:worker:postgres
 
 ```text
 PostgreSQL API 烟测通过：14/14
+凭证安全 API 烟测通过：3/3
 PostgreSQL 数据接入 API 烟测通过：2/2
 PostgreSQL 同步 API 烟测通过：5/5
 PostgreSQL 同步 worker 沙箱烟测通过：2/2
