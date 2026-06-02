@@ -73,6 +73,40 @@ await check(
 );
 
 await check(
+  "客服渠道接入前置清单",
+  {
+    url: `${baseUrl}/api/support/channel-readiness`,
+    method: "GET",
+    headers: { "x-demo-role": "support" },
+  },
+  (response, data) => ({
+    ok:
+      response.status === 200 &&
+      data?.mode === "demo" &&
+      data?.repository?.activeMode === "demo" &&
+      Array.isArray(data?.channels) &&
+      data.channels.length === 8 &&
+      data.channels.every((channel) => channel.displayNameZh && channel.englishNameZh) &&
+      data.channels.slice(0, 4).map((channel) => channel.id).join(",") ===
+        "independent_site_chat,independent_site_form,email,feishu" &&
+      Array.isArray(data?.recommendedStartOrder) &&
+      data.recommendedStartOrder.slice(0, 4).join(",") === "independent_site_chat,independent_site_form,email,feishu" &&
+      data?.summary?.lowDifficultyCount >= 4 &&
+      data?.summary?.phase1CandidatesCount === 4 &&
+      data?.summary?.blockedForPhase1Count >= 4 &&
+      data?.guardrails?.noRealSecrets === true &&
+      data?.guardrails?.noPersonalWechatAutomation === true &&
+      data?.guardrails?.noAutoSendCustomerMessages === true &&
+      data?.guardrails?.highRiskAutoReplyBlocked === true &&
+      data?.guardrails?.humanReviewRequired === true &&
+      data.channels
+        .filter((channel) => channel.difficulty === "high")
+        .every((channel) => ["official_permission_required", "blocked_for_phase_1"].includes(channel.status)),
+    detail: `渠道 ${data?.channels?.length ?? 0}，一期候选 ${data?.summary?.phase1CandidatesCount ?? 0}，阻断 ${data?.summary?.blockedForPhase1Count ?? 0}`,
+  }),
+);
+
+await check(
   "统一客服会话列表",
   {
     url: `${baseUrl}/api/support/threads`,

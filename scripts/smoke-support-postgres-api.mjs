@@ -60,6 +60,36 @@ await check(
   }),
 );
 
+await check(
+  "PostgreSQL 客服渠道接入前置清单",
+  {
+    url: `${baseUrl}/api/support/channel-readiness`,
+    method: "GET",
+    headers: supportHeaders,
+  },
+  (response, data) => ({
+    ok:
+      response.status === 200 &&
+      data?.mode === "postgres" &&
+      data?.repository?.activeMode === "postgres" &&
+      Array.isArray(data?.channels) &&
+      data.channels.length === 8 &&
+      data.channels.slice(0, 4).map((channel) => channel.id).join(",") ===
+        "independent_site_chat,independent_site_form,email,feishu" &&
+      Array.isArray(data?.recommendedStartOrder) &&
+      data.recommendedStartOrder.slice(0, 4).join(",") === "independent_site_chat,independent_site_form,email,feishu" &&
+      data?.summary?.lowDifficultyCount >= 4 &&
+      data?.summary?.phase1CandidatesCount === 4 &&
+      data?.summary?.blockedForPhase1Count >= 4 &&
+      data?.guardrails?.noRealSecrets === true &&
+      data?.guardrails?.noPersonalWechatAutomation === true &&
+      data?.guardrails?.noAutoSendCustomerMessages === true &&
+      data?.guardrails?.highRiskAutoReplyBlocked === true &&
+      data?.guardrails?.humanReviewRequired === true,
+    detail: `渠道 ${data?.channels?.length ?? 0}，一期候选 ${data?.summary?.phase1CandidatesCount ?? 0}，模式 ${data?.mode ?? "unknown"}`,
+  }),
+);
+
 const listData = await check(
   "PostgreSQL 会话列表 API",
   {

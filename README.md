@@ -80,6 +80,7 @@ GET http://127.0.0.1:4173/api/support/repository-status
 
 PostgreSQL 当前只支持低风险沙箱能力：
 
+- 可以读取：客服渠道接入前置清单，用于确认独立站、表单、邮件、飞书等低难度渠道先测试，企业微信、WhatsApp、抖音、TikTok 等渠道等待官方权限。
 - 可以读取：统一客服会话列表、会话详情、离线托管日报。
 - 可以读取：AI 客服托管闭环汇总，用于检查会话、草稿、审批、审计和日报是否完整。
 - 可以写入：生成沙箱 AI 草稿，写入 `ai_reply_suggestions`、`ai_outputs` 和 `audit_logs`。
@@ -143,7 +144,7 @@ npm run smoke:support:postgres-api
 必须看到：
 
 ```text
-PostgreSQL API 烟测通过：13/13
+PostgreSQL API 烟测通过：14/14
 ```
 
 测试完成后关闭 `4174` 端口的临时服务。不要把 `.env.local` 默认改成 PostgreSQL 模式，避免团队误把本地假数据库当成真实平台。生成草稿、审核通过或驳回都不代表已经发送客户消息。
