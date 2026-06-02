@@ -31,6 +31,25 @@ type SyncAuditDraft = {
   retryCount: number;
 };
 
+type SyncRunRow = {
+  id: string;
+  provider: string;
+  status: string;
+  mode: string;
+  requestedBy: string;
+  queueName: string | null;
+  jobId: string | null;
+  realSyncStarted: boolean;
+  containsRealSecrets: boolean;
+  containsCustomerData: boolean;
+  startedAt: Date | string;
+  finishedAt: Date | string | null;
+  failureReason: string | null;
+  retryCount: number;
+  metadata: Record<string, unknown>;
+  createdAt: Date | string;
+};
+
 const getBullMqConnection = (redisUrl: string) => {
   const url = new URL(redisUrl);
 
@@ -160,6 +179,166 @@ const buildSyncAudit = (
       ? "已写入 PostgreSQL 沙箱同步日志；这仍不代表真实平台同步。"
       : "Demo 模式仅在响应中返回同步审计目标；这不代表真实平台同步。",
 });
+
+const toIso = (value: Date | string | null): string | null => {
+  if (!value) return null;
+  return value instanceof Date ? value.toISOString() : new Date(value).toISOString();
+};
+
+const mapSyncRun = (row: SyncRunRow) => ({
+  id: row.id,
+  provider: row.provider,
+  status: row.status,
+  mode: row.mode,
+  requestedBy: row.requestedBy,
+  queueName: row.queueName,
+  jobId: row.jobId,
+  realSyncStarted: row.realSyncStarted,
+  containsRealSecrets: row.containsRealSecrets,
+  containsCustomerData: row.containsCustomerData,
+  startedAt: toIso(row.startedAt),
+  finishedAt: toIso(row.finishedAt),
+  failureReason: row.failureReason,
+  retryCount: row.retryCount,
+  persistenceTable: "sync_runs",
+  auditTable: "audit_logs",
+  dataState: "postgres_sandbox",
+  dataStateLabelZh: "PostgreSQL 沙箱同步日志",
+  createdAt: toIso(row.createdAt),
+});
+
+const readPostgresSyncRuns = async () => {
+  const client = getDb();
+  const result = await client.query<SyncRunRow>(
+    `
+      select
+        id::text as id,
+        provider,
+        status,
+        mode,
+        requested_by as "requestedBy",
+        queue_name as "queueName",
+        job_id as "jobId",
+        real_sync_started as "realSyncStarted",
+        contains_real_secrets as "containsRealSecrets",
+        contains_customer_data as "containsCustomerData",
+        started_at as "startedAt",
+        finished_at as "finishedAt",
+        failure_reason as "failureReason",
+        retry_count as "retryCount",
+        metadata,
+        created_at as "createdAt"
+      from sync_runs
+      where tenant_id = $1
+      order by created_at desc
+      limit 20
+    `,
+    [POSTGRES_DEMO_TENANT_ID],
+  );
+
+  return result.rows.map(mapSyncRun);
+};
+
+const getDemoSyncRuns = () => [
+  {
+    id: "demo_sync_run_shopify_skipped",
+    provider: "shopify",
+    status: "skipped",
+    mode: "demo",
+    requestedBy: "demo:admin",
+    queueName: SYNC_QUEUE_NAME,
+    jobId: null,
+    realSyncStarted: false,
+    containsRealSecrets: false,
+    containsCustomerData: false,
+    startedAt: new Date(Date.now() - 1000 * 60 * 20).toISOString(),
+    finishedAt: new Date(Date.now() - 1000 * 60 * 20 + 600).toISOString(),
+    failureReason: "Demo 示例：未配置或未启用真实平台同步。",
+    retryCount: 0,
+    persistenceTable: "sync_runs",
+    auditTable: "audit_logs",
+    dataState: "demo",
+    dataStateLabelZh: "Demo 同步日志",
+    createdAt: new Date(Date.now() - 1000 * 60 * 20).toISOString(),
+  },
+  {
+    id: "demo_sync_run_support_queued",
+    provider: "support",
+    status: "queued",
+    mode: "demo",
+    requestedBy: "demo:admin",
+    queueName: SYNC_QUEUE_NAME,
+    jobId: "demo-only-not-real-sync",
+    realSyncStarted: false,
+    containsRealSecrets: false,
+    containsCustomerData: false,
+    startedAt: new Date(Date.now() - 1000 * 60 * 8).toISOString(),
+    finishedAt: new Date(Date.now() - 1000 * 60 * 8 + 400).toISOString(),
+    failureReason: null,
+    retryCount: 0,
+    persistenceTable: "sync_runs",
+    auditTable: "audit_logs",
+    dataState: "demo",
+    dataStateLabelZh: "Demo 同步日志",
+    createdAt: new Date(Date.now() - 1000 * 60 * 8).toISOString(),
+  },
+];
+
+export async function GET(request: Request) {
+  const forbidden = requirePermission(request, "integrations.manage");
+  if (forbidden) return forbidden;
+
+  const repositoryStatus = getSupportRepositoryStatus();
+  if (repositoryStatus.activeMode === "postgres") {
+    const syncRuns = await readPostgresSyncRuns();
+
+    return NextResponse.json(
+      withSupportRepositoryStatus({
+        mode: "demo",
+        source: "postgres_sandbox",
+        note: "同步日志来自本地 PostgreSQL 沙箱 sync_runs 表，只用于验证审计闭环，不代表真实平台同步。",
+        syncRuns,
+        summary: {
+          totalRuns: syncRuns.length,
+          realSyncStartedCount: syncRuns.filter((item) => item.realSyncStarted).length,
+          realSecretCount: syncRuns.filter((item) => item.containsRealSecrets).length,
+          customerDataCount: syncRuns.filter((item) => item.containsCustomerData).length,
+        },
+        guardrails: {
+          noRealPlatformWrite: true,
+          noRealSecrets: true,
+          noCustomerDataSynced: true,
+          demoAuditOnly: true,
+          manualReviewBeforeLiveMode: true,
+        },
+      }),
+    );
+  }
+
+  const syncRuns = getDemoSyncRuns();
+
+  return NextResponse.json(
+    withSupportRepositoryStatus({
+      mode: "demo",
+      source: "demo_sync_audit",
+      note: "Demo 同步日志只用于演示审计字段，不代表真实平台同步，也不会读取真实客户数据。",
+      syncRuns,
+      summary: {
+        totalRuns: syncRuns.length,
+        realSyncStartedCount: 0,
+        realSecretCount: 0,
+        customerDataCount: 0,
+      },
+      guardrails: {
+        noRealPlatformWrite: true,
+        noRealSecrets: true,
+        noCustomerDataSynced: true,
+        demoAuditOnly: true,
+        manualReviewBeforeLiveMode: true,
+      },
+    }),
+  );
+}
 
 export async function POST(request: Request) {
   const forbidden = requirePermission(request, "integrations.manage");

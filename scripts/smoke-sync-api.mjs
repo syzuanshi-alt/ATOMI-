@@ -26,6 +26,32 @@ const jsonHeaders = (role) => ({
 });
 
 await check(
+  "管理员读取 Demo 同步审计日志",
+  {
+    url: `${baseUrl}/api/sync`,
+    method: "GET",
+    headers: { "x-demo-role": "admin" },
+  },
+  (response, data) => ({
+    ok:
+      response.status === 200 &&
+      data?.mode === "demo" &&
+      data?.source === "demo_sync_audit" &&
+      Array.isArray(data?.syncRuns) &&
+      data.syncRuns.every(
+        (item) =>
+          item.realSyncStarted === false &&
+          item.containsRealSecrets === false &&
+          item.containsCustomerData === false &&
+          item.persistenceTable === "sync_runs",
+      ) &&
+      data?.guardrails?.noRealPlatformWrite === true &&
+      data?.guardrails?.noRealSecrets === true,
+    detail: `日志 ${data?.syncRuns?.length ?? 0}，来源 ${data?.source ?? "missing"}`,
+  }),
+);
+
+await check(
   "管理员触发 Demo 同步任务护栏",
   {
     url: `${baseUrl}/api/sync`,

@@ -86,7 +86,7 @@ PostgreSQL 当前只支持低风险沙箱能力：
 - 可以写入：生成沙箱 AI 草稿，写入 `ai_reply_suggestions`、`ai_outputs` 和 `audit_logs`。
 - 可以写入：审核已有 AI 草稿，写入 `ai_approvals` 和 `audit_logs`。
 - 可以写入：客服回复发送前置护栏审计，证明当前只检查、不发送客户消息。
-- 可以写入：Demo 同步尝试审计，写入 `sync_runs` 和 `audit_logs`，证明排队或跳过都不代表真实平台同步。
+- 可以读取/写入：Demo 同步尝试审计，写入并读取 `sync_runs` 和 `audit_logs`，证明排队或跳过都不代表真实平台同步。
 - 暂不支持：模拟新消息写入、真实客户回复发送。
 - 客户消息写入接口在 PostgreSQL 模式下会返回 `409`，提示当前阶段不允许。
 - AI 草稿生成和发送前置检查只用本地规则沙箱，不调用真实大模型，也不会发送客户消息。
@@ -115,7 +115,7 @@ npm run smoke:sync:postgres-api
 - `npm run smoke:integrations`：检查数据接入配置草案、CSV 上传配置和权限护栏。
 - `npm run smoke:integrations:postgres-api`：检查 PostgreSQL 模式下 `/api/integrations` 是否从本地沙箱表读取，并确认密钥不外露。
 - `npm run smoke:sync`：检查 Demo 同步任务护栏，确认排队不等于真实平台同步。
-- `npm run smoke:sync:postgres-api`：检查 PostgreSQL 模式下 `/api/sync` 是否写入 `sync_runs` 和 `audit_logs`，并确认没有真实密钥、真实客户数据和真实平台同步。
+- `npm run smoke:sync:postgres-api`：检查 PostgreSQL 模式下 `/api/sync` 是否写入并读取 `sync_runs` 和 `audit_logs`，并确认没有真实密钥、真实客户数据和真实平台同步。
 
 注意：
 
@@ -155,7 +155,7 @@ npm run smoke:sync:postgres-api
 ```text
 PostgreSQL API 烟测通过：14/14
 PostgreSQL 数据接入 API 烟测通过：2/2
-PostgreSQL 同步 API 烟测通过：4/4
+PostgreSQL 同步 API 烟测通过：5/5
 ```
 
 测试完成后关闭 `4174` 端口的临时服务。不要把 `.env.local` 默认改成 PostgreSQL 模式，避免团队误把本地假数据库当成真实平台。生成草稿、审核通过、同步排队或同步审计写入，都不代表已经发送客户消息或完成真实平台同步。

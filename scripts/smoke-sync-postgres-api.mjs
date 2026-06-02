@@ -159,6 +159,33 @@ await checkDb("PostgreSQL audit_logs 已记录同步审计", async () => {
   });
 });
 
+await check(
+  "管理员读取 PostgreSQL 同步审计日志",
+  {
+    url: `${baseUrl}/api/sync`,
+    method: "GET",
+    headers: { "x-demo-role": "admin" },
+  },
+  (response, data) => ({
+    ok:
+      response.status === 200 &&
+      data?.source === "postgres_sandbox" &&
+      data?.repository?.activeMode === "postgres" &&
+      Array.isArray(data?.syncRuns) &&
+      data.syncRuns.some((item) => item.id === syncData?.syncAudit?.syncRunId && item.provider === "logistics") &&
+      data.syncRuns.every(
+        (item) =>
+          item.realSyncStarted === false &&
+          item.containsRealSecrets === false &&
+          item.containsCustomerData === false &&
+          item.persistenceTable === "sync_runs",
+      ) &&
+      data?.guardrails?.noRealPlatformWrite === true &&
+      data?.guardrails?.noRealSecrets === true,
+    detail: `日志 ${data?.syncRuns?.length ?? 0}，来源 ${data?.source ?? "missing"}`,
+  }),
+);
+
 const failed = checks.filter((item) => !item.ok);
 
 for (const item of checks) {
