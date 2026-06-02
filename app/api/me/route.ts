@@ -13,6 +13,12 @@ export async function GET(request: Request) {
     role: context.role,
     authSource: context.authSource,
     permissions: rolePermissions[context.role],
+    permissionsMatrixEndpoint: "/api/permissions/matrix",
+    authBoundary: {
+      demoRoleOnly: true,
+      notRealLogin: true,
+      realLoginRequiredForLiveMode: true,
+    },
     note: context.authNote,
   });
 }
