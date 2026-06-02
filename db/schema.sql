@@ -153,6 +153,7 @@ create table if not exists ai_approvals (
   decision text not null,
   approver_ref text,
   final_text text,
+  review_note text,
   human_edited boolean not null default false,
   decided_at timestamptz not null default now()
 );

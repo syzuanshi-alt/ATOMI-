@@ -1,13 +1,15 @@
 import "server-only";
 import { getDemoSnapshot } from "@/lib/demo-data";
 import { buildSupportReplyDraft, classifySupportRisk } from "@/lib/workflows/support";
-import type { SupportMessage, SupportThread } from "@/lib/types";
+import type { AiApprovalRecord, AiReplySuggestion, SupportMessage, SupportThread } from "@/lib/types";
 import type {
   CreateAiDraftInput,
   CreateAiDraftResult,
   CreateInboundSupportMessageInput,
   CreateInboundSupportMessageResult,
   HandoffReportResult,
+  ReviewAiDraftInput,
+  ReviewAiDraftResult,
   SupportActor,
   SupportAuditAction,
   SupportAuditEvent,
@@ -34,6 +36,49 @@ const buildAuditEvent = (
   persistenceTable: "audit_logs",
   createdAt: new Date().toISOString(),
 });
+
+const applyDraftReview = (
+  actor: SupportActor,
+  draft: AiReplySuggestion,
+  input: ReviewAiDraftInput,
+): Pick<ReviewAiDraftResult, "draft" | "approval" | "guardrail"> => {
+  const finalText = input.decision === "approved" ? input.finalText?.trim() || draft.draftText : null;
+  const humanEdited =
+    input.humanEdited ??
+    Boolean(finalText && finalText.trim() !== draft.draftText.trim());
+  const reviewedDraft: AiReplySuggestion = {
+    ...draft,
+    status: input.decision,
+  };
+  const approval: AiApprovalRecord = {
+    id: `demo_approval_${draft.id}_${Date.now()}`,
+    sourceType: "ai_reply_suggestion",
+    sourceId: draft.id,
+    riskLevel: draft.riskLevel,
+    decision: input.decision,
+    approverRef: actor.actorRef,
+    finalText,
+    reviewNote: input.reviewNote?.trim() || null,
+    humanEdited,
+    decidedAt: new Date().toISOString(),
+  };
+
+  if (input.decision === "rejected") {
+    return {
+      draft: reviewedDraft,
+      approval,
+      guardrail: "已记录人工驳回。该 AI 草稿不能发送，真实模式必须写入 ai_approvals 和 audit_logs。",
+    };
+  }
+
+  return {
+    draft: reviewedDraft,
+    approval,
+    guardrail: draft.canAutoSend
+      ? "已记录人工确认。低风险草稿可进入发送候选，但 Demo 模式不会真正发送客户消息。"
+      : "已记录人工确认。中高风险草稿仍然不能自动发送，真实发送前必须走人工发送接口和审计日志。",
+  };
+};
 
 export const demoSupportRepository: SupportRepository = {
   async listThreads(actor: SupportActor): Promise<SupportThreadListResult> {
@@ -182,6 +227,39 @@ export const demoSupportRepository: SupportRepository = {
           note: draft.canAutoSend
             ? "低风险草稿只表示可进入托管候选，真实发送必须写入 ai_autoreplies 和 audit_logs。"
             : "中高风险草稿必须进入 ai_approvals 人工审核，不能自动发送。",
+        }),
+      ],
+    };
+  },
+
+  async reviewAiDraft(actor: SupportActor, input: ReviewAiDraftInput): Promise<ReviewAiDraftResult | null> {
+    const snapshot = getDemoSnapshot();
+    const draft = snapshot.aiReplySuggestions.find((item) => item.id === input.draftId);
+
+    if (!draft) {
+      return null;
+    }
+
+    const reviewed = applyDraftReview(actor, draft, input);
+
+    return {
+      mode: "demo",
+      persisted: false,
+      note: "AI 草稿审核为模拟结果。真实模式必须更新 ai_reply_suggestions，写入 ai_approvals，并同步 audit_logs。",
+      draft: reviewed.draft,
+      approval: reviewed.approval,
+      guardrail: reviewed.guardrail,
+      persistenceTargets: supportPersistenceTargets,
+      auditEvents: [
+        buildAuditEvent(actor, "support.ai_draft.review", {
+          targetType: "ai_approval",
+          targetId: reviewed.approval.id,
+          riskLevel: draft.riskLevel,
+          result: "demo_reviewed",
+          note:
+            input.decision === "approved"
+              ? "Demo 模式只记录人工确认，不会自动发送客户消息。真实模式必须写入 ai_approvals 和 audit_logs。"
+              : "Demo 模式只记录人工驳回。真实模式必须阻止该草稿进入发送队列。",
         }),
       ],
     };

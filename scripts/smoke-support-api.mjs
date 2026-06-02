@@ -125,6 +125,48 @@ await check(
 );
 
 await check(
+  "客服角色驳回高风险 AI 草稿",
+  {
+    url: `${baseUrl}/api/support/ai-drafts/review`,
+    method: "POST",
+    headers: jsonHeaders("support"),
+    body: JSON.stringify({
+      draftId: "ars_2",
+      decision: "rejected",
+      reviewNote: "退款争议必须人工继续处理，AI 草稿不发送。",
+    }),
+  },
+  (response, data) => ({
+    ok:
+      response.status === 200 &&
+      data?.persisted === false &&
+      data?.draft?.status === "rejected" &&
+      data?.approval?.decision === "rejected" &&
+      data?.approval?.sourceId === "ars_2" &&
+      Array.isArray(data?.auditEvents) &&
+      data.auditEvents.some((item) => item.action === "support.ai_draft.review" && item.targetType === "ai_approval"),
+    detail: `审核结果 ${data?.approval?.decision ?? "unknown"}，草稿状态 ${data?.draft?.status ?? "unknown"}`,
+  }),
+);
+
+await check(
+  "老板角色不能审核客服草稿",
+  {
+    url: `${baseUrl}/api/support/ai-drafts/review`,
+    method: "POST",
+    headers: jsonHeaders("gm"),
+    body: JSON.stringify({
+      draftId: "ars_2",
+      decision: "approved",
+    }),
+  },
+  (response) => ({
+    ok: response.status === 403,
+    detail: response.status === 403 ? "审核权限拦截正常" : `预期 403，实际 ${response.status}`,
+  }),
+);
+
+await check(
   "模拟新消息进入客服中台",
   {
     url: `${baseUrl}/api/support/threads`,

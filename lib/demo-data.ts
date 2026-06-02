@@ -166,6 +166,7 @@ export const getDemoSnapshot = (): GrowthSnapshot => ({
       decision: "approved",
       approverRef: "support_demo_user",
       finalText: "Bonjour, oui, nous pouvons graver deux initiales. Merci de nous envoyer les initiales souhaitées.",
+      reviewNote: "低风险产品咨询，客服已微调用词后确认。",
       humanEdited: true,
       decidedAt: formatISO(new Date()),
     },

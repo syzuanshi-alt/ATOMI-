@@ -1,4 +1,5 @@
 import type {
+  AiApprovalRecord,
   AiReplySuggestion,
   CustomerIdentity,
   HandoffReport,
@@ -20,6 +21,7 @@ export type SupportAuditAction =
   | "support.thread.read"
   | "support.message.ingest"
   | "support.ai_draft.generate"
+  | "support.ai_draft.review"
   | "support.handoff_report.read";
 
 export type SupportAuditEvent = {
@@ -27,10 +29,10 @@ export type SupportAuditEvent = {
   tenantId: string;
   actorRef: string;
   action: SupportAuditAction;
-  targetType: "customer_thread" | "message" | "ai_reply_suggestion" | "handoff_report";
+  targetType: "customer_thread" | "message" | "ai_reply_suggestion" | "ai_approval" | "handoff_report";
   targetId: string | null;
   riskLevel: SupportRiskLevel | null;
-  result: "demo_read" | "demo_created" | "blocked";
+  result: "demo_read" | "demo_created" | "demo_reviewed" | "blocked";
   note: string;
   persistenceTable: "audit_logs";
   createdAt: string;
@@ -55,6 +57,14 @@ export type CreateInboundSupportMessageInput = {
 export type CreateAiDraftInput = {
   threadId: string;
   messageId?: string;
+};
+
+export type ReviewAiDraftInput = {
+  draftId: string;
+  decision: AiApprovalRecord["decision"];
+  finalText?: string;
+  reviewNote?: string;
+  humanEdited?: boolean;
 };
 
 export type SupportThreadListResult = {
@@ -101,6 +111,17 @@ export type CreateAiDraftResult = {
   auditEvents: SupportAuditEvent[];
 };
 
+export type ReviewAiDraftResult = {
+  mode: SupportRepositoryMode;
+  persisted: false;
+  note: string;
+  draft: AiReplySuggestion;
+  approval: AiApprovalRecord;
+  guardrail: string;
+  persistenceTargets: SupportPersistenceTarget[];
+  auditEvents: SupportAuditEvent[];
+};
+
 export type HandoffReportResult = {
   mode: SupportRepositoryMode;
   note: string;
@@ -116,6 +137,7 @@ export type SupportRepository = {
   getThreadDetail(actor: SupportActor, threadId: string): Promise<SupportThreadDetailResult | null>;
   createInboundMessage(actor: SupportActor, input: CreateInboundSupportMessageInput): Promise<CreateInboundSupportMessageResult>;
   createAiDraft(actor: SupportActor, input: CreateAiDraftInput): Promise<CreateAiDraftResult | null>;
+  reviewAiDraft(actor: SupportActor, input: ReviewAiDraftInput): Promise<ReviewAiDraftResult | null>;
   getHandoffReport(actor: SupportActor): Promise<HandoffReportResult>;
 };
 
@@ -165,7 +187,7 @@ export const supportPersistenceTargets: SupportPersistenceTarget[] = [
   {
     table: "ai_reply_suggestions",
     purpose: "保存 AI 回复草稿、风险等级、原因、状态和是否允许低风险托管候选。",
-    usedByApis: ["GET /api/support/threads/[threadId]", "POST /api/support/threads", "POST /api/support/ai-drafts"],
+    usedByApis: ["GET /api/support/threads/[threadId]", "POST /api/support/threads", "POST /api/support/ai-drafts", "POST /api/support/ai-drafts/review"],
     requiredForLiveMode: true,
   },
   {
@@ -183,13 +205,13 @@ export const supportPersistenceTargets: SupportPersistenceTarget[] = [
   {
     table: "ai_approvals",
     purpose: "保存人工确认或驳回记录，证明 AI 没有绕过人工审核。",
-    usedByApis: ["POST /api/support/ai-drafts"],
+    usedByApis: ["POST /api/support/ai-drafts", "POST /api/support/ai-drafts/review"],
     requiredForLiveMode: true,
   },
   {
     table: "audit_logs",
     purpose: "保存谁在什么时间读取、生成、接管或审核了客服动作。",
-    usedByApis: ["GET /api/support/threads", "GET /api/support/threads/[threadId]", "POST /api/support/threads", "POST /api/support/ai-drafts", "GET /api/support/handoff-report"],
+    usedByApis: ["GET /api/support/threads", "GET /api/support/threads/[threadId]", "POST /api/support/threads", "POST /api/support/ai-drafts", "POST /api/support/ai-drafts/review", "GET /api/support/handoff-report"],
     requiredForLiveMode: true,
   },
 ];

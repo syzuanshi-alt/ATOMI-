@@ -112,6 +112,7 @@ export type AiApprovalRecord = {
   decision: "approved" | "rejected";
   approverRef: string;
   finalText: string | null;
+  reviewNote: string | null;
   humanEdited: boolean;
   decidedAt: string;
 };
