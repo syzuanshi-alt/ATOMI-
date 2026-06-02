@@ -235,6 +235,33 @@ const buildAuditEvent = (
   createdAt: new Date().toISOString(),
 });
 
+const persistAuditLog = async (
+  actor: SupportActor,
+  event: SupportAuditEvent,
+  metadata: Record<string, unknown> = {},
+): Promise<void> => {
+  await query(
+    `
+      insert into audit_logs (tenant_id, actor, event, metadata)
+      values ($1, $2, $3, $4::jsonb)
+    `,
+    [
+      resolveTenantId(actor),
+      actor.actorRef,
+      event.action,
+      JSON.stringify({
+        source: "postgres_support_repository",
+        targetType: event.targetType,
+        targetId: event.targetId,
+        riskLevel: event.riskLevel,
+        result: event.result,
+        note: event.note,
+        ...metadata,
+      }),
+    ],
+  );
+};
+
 const mapThread = (row: ThreadRow): SupportThread => ({
   id: row.id,
   customerId: row.customerId ?? "unknown_customer",
@@ -428,6 +455,16 @@ export const postgresSupportRepository: SupportRepository = {
     const tenantId = resolveTenantId(actor);
     const threads = (await listThreadRows(tenantId)).map(mapThread);
     const customerIds = [...new Set(threads.map((thread) => thread.customerId).filter((id) => id !== "unknown_customer"))];
+    const auditEvent = buildAuditEvent(actor, "support.thread.list", {
+      targetType: "customer_thread",
+      targetId: null,
+      riskLevel: null,
+      note: "PostgreSQL 模式按 tenant_id 查询 customer_threads，并写入读取审计。",
+    });
+    await persistAuditLog(actor, auditEvent, {
+      scope: "support_thread_list",
+      threadCount: threads.length,
+    });
 
     return {
       mode: "postgres",
@@ -436,14 +473,7 @@ export const postgresSupportRepository: SupportRepository = {
       customers: await getCustomersByIds(tenantId, customerIds),
       identities: await getIdentitiesByCustomerIds(tenantId, customerIds),
       persistenceTargets: supportPersistenceTargets,
-      auditEvents: [
-        buildAuditEvent(actor, "support.thread.list", {
-          targetType: "customer_thread",
-          targetId: null,
-          riskLevel: null,
-          note: "PostgreSQL 只读模式按 tenant_id 查询 customer_threads；当前仅用于本地假数据验证。",
-        }),
-      ],
+      auditEvents: [auditEvent],
     };
   },
 
@@ -560,29 +590,42 @@ export const postgresSupportRepository: SupportRepository = {
       : [];
     const approvals = approvalRows.map(mapApproval);
     const approvalIds = approvals.map((approval) => approval.id);
-    const auditLogRows =
-      draftIds.length || approvalIds.length
-        ? await query<AuditLogRow>(
-            `
-              select
-                id::text as "id",
-                tenant_id::text as "tenantId",
-                actor,
-                event,
-                metadata,
-                created_at as "createdAt"
-              from audit_logs
-              where tenant_id = $1
-                and (
-                  metadata->>'sourceId' = any($2::text[])
-                  or metadata->>'approvalId' = any($3::text[])
-                )
-              order by created_at desc
-              limit 50
-            `,
-            [tenantId, draftIds, approvalIds],
+    const auditEvent = buildAuditEvent(actor, "support.thread.read", {
+      targetType: "customer_thread",
+      targetId: thread.id,
+      riskLevel: thread.riskLevel,
+      note: "PostgreSQL 模式读取会话详情，并写入 audit_logs 证明谁查看了客户消息。",
+    });
+    await persistAuditLog(actor, auditEvent, {
+      scope: "support_thread_detail",
+      threadId: thread.id,
+      customerId: thread.customerId,
+      messageCount: messages.length,
+      aiDraftCount: drafts.length,
+      approvalCount: approvals.length,
+    });
+    const auditLogRows = await query<AuditLogRow>(
+      `
+        select
+          id::text as "id",
+          tenant_id::text as "tenantId",
+          actor,
+          event,
+          metadata,
+          created_at as "createdAt"
+        from audit_logs
+        where tenant_id = $1
+          and (
+            metadata->>'sourceId' = any($2::text[])
+            or metadata->>'approvalId' = any($3::text[])
+            or metadata->>'threadId' = $4
+            or metadata->>'targetId' = $4
           )
-        : [];
+        order by created_at desc
+        limit 50
+      `,
+      [tenantId, draftIds, approvalIds, thread.id],
+    );
 
     return {
       mode: "postgres",
@@ -596,14 +639,7 @@ export const postgresSupportRepository: SupportRepository = {
       aiApprovals: approvals,
       auditLogs: auditLogRows.map(mapAuditLog),
       persistenceTargets: supportPersistenceTargets,
-      auditEvents: [
-        buildAuditEvent(actor, "support.thread.read", {
-          targetType: "customer_thread",
-          targetId: thread.id,
-          riskLevel: thread.riskLevel,
-          note: "PostgreSQL 只读模式读取会话详情；真实模式后续必须把读取审计写入 audit_logs。",
-        }),
-      ],
+      auditEvents: [auditEvent],
     };
   },
 
@@ -786,6 +822,18 @@ export const postgresSupportRepository: SupportRepository = {
     const threads = (await listThreadRows(tenantId)).map(mapThread);
     const highRiskThreads = threads.filter((thread) => thread.riskLevel === "high");
     const needsHumanThreads = threads.filter((thread) => thread.status === "needs_human");
+    const auditEvent = buildAuditEvent(actor, "support.handoff_report.read", {
+      targetType: "handoff_report",
+      targetId: reports[0]?.id ?? null,
+      riskLevel: null,
+      note: "PostgreSQL 模式读取离线托管日报，并写入 audit_logs。",
+    });
+    await persistAuditLog(actor, auditEvent, {
+      scope: "support_handoff_report",
+      reportCount: reports.length,
+      highRiskCount: highRiskThreads.length,
+      needsHumanCount: needsHumanThreads.length,
+    });
 
     return {
       mode: "postgres",
@@ -805,14 +853,7 @@ export const postgresSupportRepository: SupportRepository = {
       highRiskThreads,
       needsHumanThreads,
       persistenceTargets: supportPersistenceTargets,
-      auditEvents: [
-        buildAuditEvent(actor, "support.handoff_report.read", {
-          targetType: "handoff_report",
-          targetId: reports[0]?.id ?? null,
-          riskLevel: null,
-          note: "PostgreSQL 只读模式读取 handoff_reports；真实模式后续必须记录日报读取审计。",
-        }),
-      ],
+      auditEvents: [auditEvent],
     };
   },
 };

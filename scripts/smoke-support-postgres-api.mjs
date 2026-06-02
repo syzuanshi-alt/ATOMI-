@@ -208,7 +208,8 @@ await check(
       Array.isArray(data?.aiApprovals) &&
       data.aiApprovals.some((approval) => approval.sourceId === reviewDraftId && approval.reviewNote === reviewNote) &&
       Array.isArray(data?.auditLogs) &&
-      data.auditLogs.some((log) => log.event === "support.ai_draft.review" && log.metadata?.approvalId === reviewData?.approval?.id),
+      data.auditLogs.some((log) => log.event === "support.ai_draft.review" && log.metadata?.approvalId === reviewData?.approval?.id) &&
+      data.auditLogs.some((log) => log.event === "support.thread.read" && log.metadata?.threadId === data?.thread?.id),
     detail: `审批 ${data?.aiApprovals?.length ?? 0}，审计 ${data?.auditLogs?.length ?? 0}`,
   }),
 );
