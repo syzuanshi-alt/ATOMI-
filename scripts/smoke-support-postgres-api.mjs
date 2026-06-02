@@ -195,6 +195,25 @@ await checkDb("PostgreSQL AI 审核记录真实入库", async () => {
 });
 
 await check(
+  "PostgreSQL 会话详情返回审批和审计",
+  {
+    url: `${baseUrl}/api/support/threads/88888888-8888-4888-8888-888888888882`,
+    method: "GET",
+    headers: supportHeaders,
+  },
+  (response, data) => ({
+    ok:
+      response.status === 200 &&
+      data?.mode === "postgres" &&
+      Array.isArray(data?.aiApprovals) &&
+      data.aiApprovals.some((approval) => approval.sourceId === reviewDraftId && approval.reviewNote === reviewNote) &&
+      Array.isArray(data?.auditLogs) &&
+      data.auditLogs.some((log) => log.event === "support.ai_draft.review" && log.metadata?.approvalId === reviewData?.approval?.id),
+    detail: `审批 ${data?.aiApprovals?.length ?? 0}，审计 ${data?.auditLogs?.length ?? 0}`,
+  }),
+);
+
+await check(
   "PostgreSQL 只读模式阻断写入",
   {
     url: `${baseUrl}/api/support/threads`,

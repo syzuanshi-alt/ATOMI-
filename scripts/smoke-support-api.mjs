@@ -105,8 +105,10 @@ await check(
       data?.thread?.id === "th_2" &&
       Array.isArray(data?.messages) &&
       Array.isArray(data?.translations) &&
-      Array.isArray(data?.aiReplySuggestions),
-    detail: `消息 ${data?.messages?.length ?? 0}，AI 草稿 ${data?.aiReplySuggestions?.length ?? 0}`,
+      Array.isArray(data?.aiReplySuggestions) &&
+      Array.isArray(data?.aiApprovals) &&
+      Array.isArray(data?.auditLogs),
+    detail: `消息 ${data?.messages?.length ?? 0}，AI 草稿 ${data?.aiReplySuggestions?.length ?? 0}，审批 ${data?.aiApprovals?.length ?? 0}`,
   }),
 );
 

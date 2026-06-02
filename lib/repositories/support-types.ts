@@ -38,6 +38,15 @@ export type SupportAuditEvent = {
   createdAt: string;
 };
 
+export type SupportAuditLogEntry = {
+  id: string;
+  tenantId: string | null;
+  actor: string;
+  event: string;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+};
+
 export type SupportPersistenceTarget = {
   table: string;
   purpose: string;
@@ -86,6 +95,8 @@ export type SupportThreadDetailResult = {
   messages: SupportMessage[];
   translations: MessageTranslation[];
   aiReplySuggestions: AiReplySuggestion[];
+  aiApprovals: AiApprovalRecord[];
+  auditLogs: SupportAuditLogEntry[];
   persistenceTargets: SupportPersistenceTarget[];
   auditEvents: SupportAuditEvent[];
 };

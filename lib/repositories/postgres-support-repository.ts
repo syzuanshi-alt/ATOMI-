@@ -25,6 +25,7 @@ import type {
   SupportActor,
   SupportAuditAction,
   SupportAuditEvent,
+  SupportAuditLogEntry,
   SupportRepository,
   SupportThreadDetailResult,
   SupportThreadListResult,
@@ -139,6 +140,15 @@ type HandoffReportRow = {
   needsHumanCount: number;
   highRiskCount: number;
   summary: unknown;
+};
+
+type AuditLogRow = {
+  id: string;
+  tenantId: string | null;
+  actor: string;
+  event: string;
+  metadata: unknown;
+  createdAt: Date | string;
 };
 
 const isOneOf = <T extends readonly string[]>(values: T, value: unknown): value is T[number] => {
@@ -298,6 +308,23 @@ const mapApproval = (row: ApprovalRow): AiApprovalRecord => ({
   reviewNote: row.reviewNote,
   humanEdited: row.humanEdited,
   decidedAt: toIso(row.decidedAt),
+});
+
+const asMetadataObject = (metadata: unknown): Record<string, unknown> => {
+  if (metadata && typeof metadata === "object" && !Array.isArray(metadata)) {
+    return metadata as Record<string, unknown>;
+  }
+
+  return { value: metadata };
+};
+
+const mapAuditLog = (row: AuditLogRow): SupportAuditLogEntry => ({
+  id: row.id,
+  tenantId: row.tenantId,
+  actor: row.actor,
+  event: row.event,
+  metadata: asMetadataObject(row.metadata),
+  createdAt: toIso(row.createdAt),
 });
 
 const getSummaryText = (summary: unknown): string => {
@@ -506,6 +533,56 @@ export const postgresSupportRepository: SupportRepository = {
       `,
       [tenantId, thread.id],
     );
+    const drafts = draftRows.map(mapDraft);
+    const draftIds = drafts.map((draft) => draft.id);
+    const approvalRows = draftIds.length
+      ? await query<ApprovalRow>(
+          `
+            select
+              id::text as "id",
+              source_type as "sourceType",
+              source_id::text as "sourceId",
+              risk_level as "riskLevel",
+              decision,
+              approver_ref as "approverRef",
+              final_text as "finalText",
+              review_note as "reviewNote",
+              human_edited as "humanEdited",
+              decided_at as "decidedAt"
+            from ai_approvals
+            where tenant_id = $1
+              and source_type = 'ai_reply_suggestion'
+              and source_id = any($2::uuid[])
+            order by decided_at desc
+          `,
+          [tenantId, draftIds],
+        )
+      : [];
+    const approvals = approvalRows.map(mapApproval);
+    const approvalIds = approvals.map((approval) => approval.id);
+    const auditLogRows =
+      draftIds.length || approvalIds.length
+        ? await query<AuditLogRow>(
+            `
+              select
+                id::text as "id",
+                tenant_id::text as "tenantId",
+                actor,
+                event,
+                metadata,
+                created_at as "createdAt"
+              from audit_logs
+              where tenant_id = $1
+                and (
+                  metadata->>'sourceId' = any($2::text[])
+                  or metadata->>'approvalId' = any($3::text[])
+                )
+              order by created_at desc
+              limit 50
+            `,
+            [tenantId, draftIds, approvalIds],
+          )
+        : [];
 
     return {
       mode: "postgres",
@@ -515,7 +592,9 @@ export const postgresSupportRepository: SupportRepository = {
       identities: thread.customerId === "unknown_customer" ? [] : await getIdentitiesByCustomerIds(tenantId, [thread.customerId]),
       messages,
       translations: translationRows.map(mapTranslation),
-      aiReplySuggestions: draftRows.map(mapDraft),
+      aiReplySuggestions: drafts,
+      aiApprovals: approvals,
+      auditLogs: auditLogRows.map(mapAuditLog),
       persistenceTargets: supportPersistenceTargets,
       auditEvents: [
         buildAuditEvent(actor, "support.thread.read", {

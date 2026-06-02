@@ -113,6 +113,8 @@ export const demoSupportRepository: SupportRepository = {
 
     const messages = snapshot.supportMessages.filter((item) => item.threadId === thread.id);
     const messageIds = new Set(messages.map((item) => item.id));
+    const aiReplySuggestions = snapshot.aiReplySuggestions.filter((item) => item.threadId === thread.id);
+    const aiReplySuggestionIds = new Set(aiReplySuggestions.map((item) => item.id));
 
     return {
       mode: "demo",
@@ -122,7 +124,9 @@ export const demoSupportRepository: SupportRepository = {
       identities: snapshot.customerIdentities.filter((item) => item.customerId === thread.customerId),
       messages,
       translations: snapshot.messageTranslations.filter((item) => messageIds.has(item.messageId)),
-      aiReplySuggestions: snapshot.aiReplySuggestions.filter((item) => item.threadId === thread.id),
+      aiReplySuggestions,
+      aiApprovals: snapshot.aiApprovals.filter((item) => aiReplySuggestionIds.has(item.sourceId)),
+      auditLogs: [],
       persistenceTargets: supportPersistenceTargets,
       auditEvents: [
         buildAuditEvent(actor, "support.thread.read", {
