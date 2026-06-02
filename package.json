@@ -13,6 +13,7 @@
     "smoke:integrations:postgres-api": "node scripts/smoke-integrations-postgres-api.mjs",
     "smoke:sync": "node scripts/smoke-sync-api.mjs",
     "smoke:sync:postgres-api": "node scripts/smoke-sync-postgres-api.mjs",
+    "smoke:sync:worker:postgres": "node scripts/smoke-sync-worker-postgres.mjs",
     "smoke:support": "node scripts/smoke-support-api.mjs",
     "db:schema:check": "node scripts/check-postgres-schema.mjs",
     "db:support:seed": "node scripts/seed-support-demo-data.mjs",

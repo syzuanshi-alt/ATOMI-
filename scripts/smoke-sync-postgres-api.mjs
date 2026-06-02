@@ -175,6 +175,7 @@ await check(
       data.syncRuns.some((item) => item.id === syncData?.syncAudit?.syncRunId && item.provider === "logistics") &&
       data.syncRuns.every(
         (item) =>
+          ["queued", "running", "succeeded", "failed", "skipped"].includes(item.status) &&
           item.realSyncStarted === false &&
           item.containsRealSecrets === false &&
           item.containsCustomerData === false &&
