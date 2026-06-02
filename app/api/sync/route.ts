@@ -1,12 +1,24 @@
 import { Queue } from "bullmq";
 import { NextResponse } from "next/server";
-import IORedis from "ioredis";
 import { z } from "zod";
 import { requirePermission } from "@/lib/auth";
 
 const syncSchema = z.object({
   provider: z.enum(["shopify", "meta_ads", "tiktok_ads", "instagram_graph", "logistics", "support", "csv"]),
 });
+
+const getBullMqConnection = (redisUrl: string) => {
+  const url = new URL(redisUrl);
+
+  return {
+    host: url.hostname,
+    port: Number(url.port || 6379),
+    username: url.username || undefined,
+    password: url.password || undefined,
+    db: Number(url.pathname.replace("/", "") || 0),
+    maxRetriesPerRequest: null,
+  };
+};
 
 export async function POST(request: Request) {
   const forbidden = requirePermission(request, "integrations.manage");
@@ -25,16 +37,12 @@ export async function POST(request: Request) {
     });
   }
 
-  const redis = new IORedis(process.env.REDIS_URL, {
-    maxRetriesPerRequest: null,
-  });
-  const queue = new Queue("provider-sync", { connection: redis });
+  const queue = new Queue("provider-sync", { connection: getBullMqConnection(process.env.REDIS_URL) });
   const job = await queue.add("sync", {
     provider: body.data.provider,
     requestedAt: new Date().toISOString(),
   });
   await queue.close();
-  await redis.quit();
 
   return NextResponse.json({ queued: true, jobId: job.id, provider: body.data.provider });
 }

@@ -1,14 +1,10 @@
 "use client";
 
 import {
-  BadgeCheck,
   Bell,
-  Bot,
-  ChartNoAxesCombined,
   ClipboardCheck,
   Database,
   Gauge,
-  Globe2,
   Handshake,
   LockKeyhole,
   Megaphone,

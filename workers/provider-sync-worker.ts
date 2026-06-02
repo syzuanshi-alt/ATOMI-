@@ -1,5 +1,4 @@
 import { Worker } from "bullmq";
-import IORedis from "ioredis";
 import { callProvider } from "@/lib/connectors/base";
 import type { Provider } from "@/lib/types";
 
@@ -9,9 +8,20 @@ if (!redisUrl) {
   throw new Error("REDIS_URL is required to run provider-sync-worker.");
 }
 
-const connection = new IORedis(redisUrl, {
-  maxRetriesPerRequest: null,
-});
+const getBullMqConnection = (redisConnectionUrl: string) => {
+  const url = new URL(redisConnectionUrl);
+
+  return {
+    host: url.hostname,
+    port: Number(url.port || 6379),
+    username: url.username || undefined,
+    password: url.password || undefined,
+    db: Number(url.pathname.replace("/", "") || 0),
+    maxRetriesPerRequest: null,
+  };
+};
+
+const connection = getBullMqConnection(redisUrl);
 
 type SyncJob = {
   provider: Provider;

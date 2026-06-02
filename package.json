@@ -6,7 +6,7 @@
     "dev": "next dev -H 127.0.0.1 -p 4173",
     "build": "next build",
     "start": "next start -H 127.0.0.1 -p 4173",
-    "lint": "next lint",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "verify:template": "node scripts/verify-template.mjs"
   },

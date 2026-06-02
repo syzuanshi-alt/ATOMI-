@@ -20,6 +20,142 @@ create table if not exists integrations (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists support_channels (
+  id uuid primary key default uuid_generate_v4(),
+  tenant_id uuid not null references tenants(id),
+  channel_type text not null,
+  name text not null,
+  status text not null default 'demo',
+  difficulty text not null default 'low',
+  created_at timestamptz not null default now()
+);
+
+create table if not exists support_channel_accounts (
+  id uuid primary key default uuid_generate_v4(),
+  tenant_id uuid not null references tenants(id),
+  channel_id uuid not null references support_channels(id),
+  account_ref text not null,
+  encrypted_secret bytea,
+  scopes text[] not null default '{}',
+  status text not null default 'not_connected',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists customers (
+  id uuid primary key default uuid_generate_v4(),
+  tenant_id uuid not null references tenants(id),
+  display_name text not null,
+  primary_email text,
+  primary_phone text,
+  country text,
+  language text not null default 'zh-CN',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists customer_identities (
+  id uuid primary key default uuid_generate_v4(),
+  tenant_id uuid not null references tenants(id),
+  customer_id uuid not null references customers(id),
+  channel_type text not null,
+  external_user_id text not null,
+  display_name text,
+  created_at timestamptz not null default now(),
+  unique (tenant_id, channel_type, external_user_id)
+);
+
+create table if not exists customer_threads (
+  id uuid primary key default uuid_generate_v4(),
+  tenant_id uuid not null references tenants(id),
+  customer_id uuid references customers(id),
+  channel_type text not null,
+  subject text not null,
+  status text not null default 'open',
+  risk_level text not null default 'low',
+  language text not null default 'zh-CN',
+  order_ref text,
+  last_message_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists messages (
+  id uuid primary key default uuid_generate_v4(),
+  tenant_id uuid not null references tenants(id),
+  thread_id uuid not null references customer_threads(id),
+  channel_type text not null,
+  direction text not null,
+  sender_type text not null,
+  sender_ref text,
+  original_text text not null,
+  original_payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists message_translations (
+  id uuid primary key default uuid_generate_v4(),
+  tenant_id uuid not null references tenants(id),
+  message_id uuid not null references messages(id),
+  source_language text not null,
+  target_language text not null,
+  translated_text text not null,
+  model_name text not null,
+  human_edited boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists ai_reply_suggestions (
+  id uuid primary key default uuid_generate_v4(),
+  tenant_id uuid not null references tenants(id),
+  thread_id uuid not null references customer_threads(id),
+  message_id uuid references messages(id),
+  draft_text text not null,
+  risk_level text not null,
+  reason text not null,
+  status text not null default 'pending_review',
+  created_at timestamptz not null default now()
+);
+
+create table if not exists ai_autoreplies (
+  id uuid primary key default uuid_generate_v4(),
+  tenant_id uuid not null references tenants(id),
+  thread_id uuid not null references customer_threads(id),
+  message_id uuid references messages(id),
+  reply_text text not null,
+  risk_level text not null,
+  sent_at timestamptz,
+  blocked_reason text,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists ai_approvals (
+  id uuid primary key default uuid_generate_v4(),
+  tenant_id uuid not null references tenants(id),
+  source_type text not null,
+  source_id uuid not null,
+  risk_level text not null,
+  decision text not null,
+  approver_ref text,
+  final_text text,
+  human_edited boolean not null default false,
+  decided_at timestamptz not null default now()
+);
+
+create table if not exists handoff_reports (
+  id uuid primary key default uuid_generate_v4(),
+  tenant_id uuid not null references tenants(id),
+  report_date date not null,
+  window_start timestamptz not null,
+  window_end timestamptz not null,
+  new_threads_count integer not null default 0,
+  ai_replies_count integer not null default 0,
+  needs_human_count integer not null default 0,
+  high_risk_count integer not null default 0,
+  summary jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists creators (
   id uuid primary key default uuid_generate_v4(),
   tenant_id uuid not null references tenants(id),
@@ -116,3 +252,12 @@ create table if not exists audit_logs (
   metadata jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now()
 );
+
+create index if not exists idx_customer_threads_tenant_status
+  on customer_threads(tenant_id, status, last_message_at desc);
+
+create index if not exists idx_messages_thread_created
+  on messages(thread_id, created_at);
+
+create index if not exists idx_ai_reply_suggestions_thread_status
+  on ai_reply_suggestions(thread_id, status);

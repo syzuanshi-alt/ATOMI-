@@ -11,15 +11,28 @@ export type Permission =
   | "ads.recommend"
   | "orders.read"
   | "orders.manage"
+  | "support.read"
+  | "support.reply"
+  | "support.autopilot.manage"
   | "actions.read"
   | "actions.approve"
   | "privacy.manage";
 
 export const rolePermissions: Record<Role | "admin", Permission[]> = {
-  gm: ["dashboard.read", "creators.read", "ads.read", "orders.read", "actions.read", "actions.approve"],
+  gm: ["dashboard.read", "creators.read", "ads.read", "orders.read", "support.read", "actions.read", "actions.approve"],
   bd: ["dashboard.read", "creators.read", "creators.manage", "creatives.read", "actions.read", "actions.approve"],
   media_buyer: ["dashboard.read", "creatives.read", "creatives.manage", "ads.read", "ads.recommend", "actions.read", "actions.approve"],
-  support: ["dashboard.read", "orders.read", "orders.manage", "actions.read", "actions.approve", "privacy.manage"],
+  support: [
+    "dashboard.read",
+    "orders.read",
+    "orders.manage",
+    "support.read",
+    "support.reply",
+    "support.autopilot.manage",
+    "actions.read",
+    "actions.approve",
+    "privacy.manage",
+  ],
   admin: [
     "dashboard.read",
     "integrations.manage",
@@ -31,6 +44,9 @@ export const rolePermissions: Record<Role | "admin", Permission[]> = {
     "ads.recommend",
     "orders.read",
     "orders.manage",
+    "support.read",
+    "support.reply",
+    "support.autopilot.manage",
     "actions.read",
     "actions.approve",
     "privacy.manage",
