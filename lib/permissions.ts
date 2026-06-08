@@ -123,6 +123,26 @@ export const getRolePermissionMatrix = () => {
 
 export const getApiPermissionChecks = (): ApiPermissionCheck[] => [
   {
+    path: "/api/permissions/matrix",
+    method: "GET",
+    titleZh: "读取 Demo 权限矩阵",
+    requiredPermissions: ["dashboard.read"],
+    allowedRoles: rolesWithPermissions(["dashboard.read"]),
+    manualReviewRequired: false,
+    realPlatformWriteAllowed: false,
+    noteZh: "当前只解释 Demo 角色权限，不代表真实登录系统已经完成。",
+  },
+  {
+    path: "/api/permissions/rbac-readiness",
+    method: "GET",
+    titleZh: "读取 PostgreSQL RBAC 准备状态",
+    requiredPermissions: ["integrations.manage"],
+    allowedRoles: rolesWithPermissions(["integrations.manage"]),
+    manualReviewRequired: true,
+    realPlatformWriteAllowed: false,
+    noteZh: "只读取本地 RBAC 沙箱状态，不返回用户邮箱、真实客户数据或平台凭证。",
+  },
+  {
     path: "/api/integrations",
     method: "GET",
     titleZh: "读取数据接入配置",

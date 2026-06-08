@@ -12,6 +12,9 @@
     "smoke:integrations": "node scripts/smoke-integrations-api.mjs",
     "smoke:credentials": "node scripts/smoke-credentials-api.mjs",
     "smoke:permissions": "node scripts/smoke-permissions-api.mjs",
+    "smoke:rbac": "node scripts/smoke-rbac-api.mjs",
+    "smoke:session-adapter": "node scripts/smoke-session-adapter-api.mjs",
+    "smoke:session-context": "node scripts/smoke-session-context-api.mjs",
     "smoke:auth-readiness": "node scripts/smoke-auth-readiness-api.mjs",
     "smoke:integrations:postgres-api": "node scripts/smoke-integrations-postgres-api.mjs",
     "smoke:sync": "node scripts/smoke-sync-api.mjs",
@@ -20,6 +23,7 @@
     "smoke:support": "node scripts/smoke-support-api.mjs",
     "db:schema:check": "node scripts/check-postgres-schema.mjs",
     "db:support:seed": "node scripts/seed-support-demo-data.mjs",
+    "smoke:rbac:postgres": "node scripts/smoke-rbac-postgres.mjs",
     "smoke:support:postgres": "node scripts/smoke-support-postgres.mjs",
     "smoke:support:postgres-api": "node scripts/smoke-support-postgres-api.mjs"
   },

@@ -37,6 +37,13 @@ await check(
       Array.isArray(data?.liveModeRequirements) &&
       data.liveModeRequirements.includes("正式登录 Session（会话）") &&
       data.liveModeRequirements.includes("租户成员表 tenant_members") &&
+      data?.recommendedAuthPlan?.recommended === "authjs_with_postgres_rbac" &&
+      data?.recommendedAuthPlan?.stage === "design_locked_not_installed" &&
+      data?.recommendedAuthPlan?.nextStep === "先做本地 Session 适配层和 PostgreSQL RBAC 读取，不直接接真实供应商。" &&
+      data?.sessionAdapterReadinessEndpoint === "/api/auth/session-adapter-readiness" &&
+      data?.sessionContextReadinessEndpoint === "/api/auth/session-context-readiness" &&
+      Array.isArray(data?.authProviderOptions) &&
+      data.authProviderOptions.length >= 3 &&
       Array.isArray(data?.blockedForLiveMode) &&
       data.blockedForLiveMode.includes("x-demo-role 请求头"),
     detail: `模式 ${data?.mode ?? "unknown"}，当前角色 ${data?.currentAuth?.role ?? "unknown"}`,

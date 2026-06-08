@@ -80,6 +80,7 @@ await check(
   (response, data) => {
     const endpoints = Array.isArray(data?.apiPermissionChecks) ? data.apiPermissionChecks : [];
     const credentialReadiness = endpoints.find((item) => item.path === "/api/integrations/credential-readiness");
+    const rbacReadiness = endpoints.find((item) => item.path === "/api/permissions/rbac-readiness");
     const aiDraftReview = endpoints.find((item) => item.path === "/api/support/ai-drafts/review");
     const sync = endpoints.find((item) => item.path === "/api/sync");
     return {
@@ -88,6 +89,9 @@ await check(
         credentialReadiness?.requiredPermissions?.includes("integrations.manage") &&
         credentialReadiness?.allowedRoles?.includes("admin") &&
         !credentialReadiness?.allowedRoles?.includes("support") &&
+        rbacReadiness?.requiredPermissions?.includes("integrations.manage") &&
+        rbacReadiness?.allowedRoles?.includes("admin") &&
+        !rbacReadiness?.allowedRoles?.includes("support") &&
         aiDraftReview?.requiredPermissions?.includes("support.reply") &&
         aiDraftReview?.manualReviewRequired === true &&
         sync?.requiredPermissions?.includes("integrations.manage") &&
@@ -109,6 +113,7 @@ await check(
       response.status === 200 &&
       data?.role === "support" &&
       data?.permissionsMatrixEndpoint === "/api/permissions/matrix" &&
+      data?.rbacReadinessEndpoint === "/api/permissions/rbac-readiness" &&
       data?.authBoundary?.demoRoleOnly === true &&
       data?.authBoundary?.notRealLogin === true,
     detail: `当前角色 ${data?.role ?? "unknown"}，权限入口 ${data?.permissionsMatrixEndpoint ?? "missing"}`,

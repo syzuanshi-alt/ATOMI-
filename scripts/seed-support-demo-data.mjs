@@ -1,6 +1,27 @@
 import { DEMO_SUPPORT_ROLE_ID, DEMO_SUPPORT_USER_ID, DEMO_TENANT_ID, withPostgres } from "./support-postgres-utils.mjs";
 
 const ids = {
+  userAdmin: "22222222-2222-4222-8222-222222222221",
+  userGm: "22222222-2222-4222-8222-222222222223",
+  userBd: "22222222-2222-4222-8222-222222222224",
+  userMediaBuyer: "22222222-2222-4222-8222-222222222225",
+  roleAdmin: "33333333-3333-4333-8333-333333333331",
+  roleGm: "33333333-3333-4333-8333-333333333332",
+  roleBd: "33333333-3333-4333-8333-333333333334",
+  roleMediaBuyer: "33333333-3333-4333-8333-333333333335",
+  permissionDashboardRead: "44444444-4444-4444-8444-444444444401",
+  permissionIntegrationsManage: "44444444-4444-4444-8444-444444444402",
+  permissionCreatorsRead: "44444444-4444-4444-8444-444444444403",
+  permissionCreatorsManage: "44444444-4444-4444-8444-444444444404",
+  permissionCreativesRead: "44444444-4444-4444-8444-444444444405",
+  permissionCreativesManage: "44444444-4444-4444-8444-444444444406",
+  permissionAdsRead: "44444444-4444-4444-8444-444444444407",
+  permissionAdsRecommend: "44444444-4444-4444-8444-444444444408",
+  permissionOrdersRead: "44444444-4444-4444-8444-444444444409",
+  permissionOrdersManage: "44444444-4444-4444-8444-444444444410",
+  permissionSupportAutopilotManage: "44444444-4444-4444-8444-444444444411",
+  permissionActionsRead: "44444444-4444-4444-8444-444444444412",
+  permissionPrivacyManage: "44444444-4444-4444-8444-444444444413",
   permissionRead: "44444444-4444-4444-8444-444444444441",
   permissionReply: "44444444-4444-4444-8444-444444444442",
   permissionApprove: "44444444-4444-4444-8444-444444444443",
@@ -28,6 +49,59 @@ const ids = {
   integrationAuditSeed: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeef",
 };
 
+const sandboxUsers = [
+  [ids.userAdmin, "admin.sandbox@example.test", "沙箱系统管理员", "admin", ids.roleAdmin],
+  [ids.userGm, "gm.sandbox@example.test", "沙箱老板", "gm", ids.roleGm],
+  [ids.userBd, "bd.sandbox@example.test", "沙箱达人 BD", "bd", ids.roleBd],
+  [ids.userMediaBuyer, "media-buyer.sandbox@example.test", "沙箱投手", "media_buyer", ids.roleMediaBuyer],
+  [DEMO_SUPPORT_USER_ID, "support.sandbox@example.test", "沙箱客服", "support", DEMO_SUPPORT_ROLE_ID],
+];
+
+const sandboxRoles = [
+  [ids.roleAdmin, "admin", "系统管理员"],
+  [ids.roleGm, "gm", "老板 / 总经理"],
+  [ids.roleBd, "bd", "达人 BD"],
+  [ids.roleMediaBuyer, "media_buyer", "投手 / 投流运营"],
+  [DEMO_SUPPORT_ROLE_ID, "support", "客服"],
+];
+
+const sandboxPermissions = [
+  [ids.permissionDashboardRead, "dashboard.read", "读取平台总控"],
+  [ids.permissionIntegrationsManage, "integrations.manage", "管理数据接入与凭证预检"],
+  [ids.permissionCreatorsRead, "creators.read", "读取达人资料"],
+  [ids.permissionCreatorsManage, "creators.manage", "管理达人资料"],
+  [ids.permissionCreativesRead, "creatives.read", "读取素材数据"],
+  [ids.permissionCreativesManage, "creatives.manage", "管理素材数据"],
+  [ids.permissionAdsRead, "ads.read", "读取投流数据"],
+  [ids.permissionAdsRecommend, "ads.recommend", "生成投流建议"],
+  [ids.permissionOrdersRead, "orders.read", "读取订单数据"],
+  [ids.permissionOrdersManage, "orders.manage", "管理订单信息"],
+  [ids.permissionRead, "support.read", "查看客服消息"],
+  [ids.permissionReply, "support.reply", "生成客服回复草稿"],
+  [ids.permissionSupportAutopilotManage, "support.autopilot.manage", "管理 AI 客服托管"],
+  [ids.permissionActionsRead, "actions.read", "读取 AI 动作"],
+  [ids.permissionApprove, "actions.approve", "审核 AI 动作"],
+  [ids.permissionPrivacyManage, "privacy.manage", "管理隐私请求"],
+];
+
+const rolePermissionCodes = {
+  admin: sandboxPermissions.map((permission) => permission[1]),
+  gm: ["dashboard.read", "creators.read", "ads.read", "orders.read", "support.read", "actions.read", "actions.approve"],
+  bd: ["dashboard.read", "creators.read", "creators.manage", "creatives.read", "actions.read", "actions.approve"],
+  media_buyer: ["dashboard.read", "creatives.read", "creatives.manage", "ads.read", "ads.recommend", "actions.read", "actions.approve"],
+  support: [
+    "dashboard.read",
+    "orders.read",
+    "orders.manage",
+    "support.read",
+    "support.reply",
+    "support.autopilot.manage",
+    "actions.read",
+    "actions.approve",
+    "privacy.manage",
+  ],
+};
+
 try {
   await withPostgres(async (pool) => {
   const client = await pool.connect();
@@ -50,34 +124,32 @@ try {
       [DEMO_TENANT_ID],
     );
 
-    await client.query(
-      `
-        insert into users (id, email, display_name, status)
-        values ($1, 'support.sandbox@example.test', '沙箱客服', 'active')
-        on conflict (email) do update
-        set display_name = excluded.display_name,
-            status = excluded.status,
-            updated_at = now()
-      `,
-      [DEMO_SUPPORT_USER_ID],
-    );
+    for (const user of sandboxUsers) {
+      await client.query(
+        `
+          insert into users (id, email, display_name, status)
+          values ($1, $2, $3, 'active')
+          on conflict (email) do update
+          set display_name = excluded.display_name,
+              status = excluded.status,
+              updated_at = now()
+        `,
+        [user[0], user[1], user[2]],
+      );
+    }
 
-    await client.query(
-      `
-        insert into roles (id, code, name)
-        values ($1, 'support', '客服')
-        on conflict (code) do update set name = excluded.name
-      `,
-      [DEMO_SUPPORT_ROLE_ID],
-    );
+    for (const role of sandboxRoles) {
+      await client.query(
+        `
+          insert into roles (id, code, name)
+          values ($1, $2, $3)
+          on conflict (code) do update set name = excluded.name
+        `,
+        role,
+      );
+    }
 
-    const permissions = [
-      [ids.permissionRead, "support.read", "查看客服消息"],
-      [ids.permissionReply, "support.reply", "生成客服回复草稿"],
-      [ids.permissionApprove, "actions.approve", "审核 AI 动作"],
-    ];
-
-    for (const permission of permissions) {
+    for (const permission of sandboxPermissions) {
       await client.query(
         `
           insert into permissions (id, code, name)
@@ -90,26 +162,38 @@ try {
 
     await client.query(
       `
-        insert into role_permissions (role_id, permission_id)
-        select $1, id
-        from permissions
-        where code = any($2::text[])
-        on conflict (role_id, permission_id) do nothing
+        delete from role_permissions
+        where role_id = any($1::uuid[])
       `,
-      [DEMO_SUPPORT_ROLE_ID, permissions.map((permission) => permission[1])],
+      [sandboxRoles.map((role) => role[0])],
     );
 
-    await client.query(
-      `
-        insert into tenant_members (tenant_id, user_id, role_id, status)
-        values ($1, $2, $3, 'active')
-        on conflict (tenant_id, user_id) do update
-        set role_id = excluded.role_id,
-            status = excluded.status,
-            updated_at = now()
-      `,
-      [DEMO_TENANT_ID, DEMO_SUPPORT_USER_ID, DEMO_SUPPORT_ROLE_ID],
-    );
+    for (const role of sandboxRoles) {
+      await client.query(
+        `
+          insert into role_permissions (role_id, permission_id)
+          select $1, id
+          from permissions
+          where code = any($2::text[])
+          on conflict (role_id, permission_id) do nothing
+        `,
+        [role[0], rolePermissionCodes[role[1]]],
+      );
+    }
+
+    for (const user of sandboxUsers) {
+      await client.query(
+        `
+          insert into tenant_members (tenant_id, user_id, role_id, status)
+          values ($1, $2, $3, 'active')
+          on conflict (tenant_id, user_id) do update
+          set role_id = excluded.role_id,
+              status = excluded.status,
+              updated_at = now()
+        `,
+        [DEMO_TENANT_ID, user[0], user[4]],
+      );
+    }
 
     const integrations = [
       [ids.integrationShopify, "shopify", "SANDBOX-SHOPIFY-STORE"],
@@ -368,6 +452,7 @@ try {
 
 console.log("本地 PostgreSQL 假客服数据写入完成。");
 console.log(`Demo tenant_id：${DEMO_TENANT_ID}`);
+console.log("已写入 5 个 RBAC 沙箱角色、5 个 .test 假用户和完整角色权限映射。");
 console.log("已重置 Demo 租户下的 AI 草稿、AI 输出、审批和审计沙箱记录。");
 console.log("已写入 6 个数据接入沙箱连接，全部不包含真实密钥。");
 console.log("注意：这些都是 .test 邮箱和 SANDBOX 订单号，不是真实客户数据。");

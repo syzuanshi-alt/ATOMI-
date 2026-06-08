@@ -8,6 +8,7 @@
 2. `docs/第1周执行清单-AI客服托管原型.md`
 3. `docs/Demo模式与真实模式边界.md`
 4. `docs/AI客服消息中台与托管规则.md`
+5. `docs/真实登录Session与权限落地方案.md`
 
 Claude Code / Codex 每次执行前必须先读完整计划和第 1 周清单。
 
@@ -83,6 +84,7 @@ PostgreSQL 当前只支持低风险沙箱能力：
 - 可以读取：客服渠道接入前置清单，用于确认独立站、表单、邮件、飞书等低难度渠道先测试，企业微信、WhatsApp、抖音、TikTok 等渠道等待官方权限。
 - 可以读取：凭证管理预检状态，用于确认加密配置是否具备真实接入前准备条件，但不返回任何环境变量原文或明文凭证。
 - 可以读取：Demo 权限矩阵，用于确认 GM、BD、投手、客服、管理员各自能访问哪些接口；这不代表真实登录系统已完成。
+- 可以读取：PostgreSQL RBAC 准备状态，用于确认数据库里的租户成员、角色、权限和静态权限矩阵是否一致；这仍不代表真实登录系统已完成。
 - 可以读取：真实登录准备状态，用于确认当前仍是 Demo Header，不是真实 Session，也不允许在生产继续使用 `x-demo-role`。
 - 可以读取：统一客服会话列表、会话详情、离线托管日报。
 - 可以读取：AI 客服托管闭环汇总，用于检查会话、草稿、审批、审计和日报是否完整。
@@ -109,6 +111,10 @@ npm run db:schema:check
 npm run db:support:seed
 npm run smoke:auth-readiness
 npm run smoke:permissions
+npm run smoke:rbac
+npm run smoke:rbac:postgres
+npm run smoke:session-adapter
+npm run smoke:session-context
 npm run smoke:credentials
 npm run smoke:support:postgres
 npm run smoke:integrations:postgres-api
@@ -122,6 +128,10 @@ npm run smoke:sync:worker:postgres
 - `npm run db:support:seed`：重置 Demo 租户下的 AI 沙箱记录，并写入本地假租户、假客户、假客服会话、假 AI 草稿。
 - `npm run smoke:auth-readiness`：检查 `/api/auth/session-readiness` 和 `/api/me`，确认当前只是 Demo 认证，真实模式必须接正式登录 Session 和租户成员关系。
 - `npm run smoke:permissions`：检查 `/api/permissions/matrix` 和 `/api/me`，确认 Demo 角色权限、关键接口边界和真实登录前限制。
+- `npm run smoke:rbac`：检查 `/api/permissions/rbac-readiness`，确认管理员能读取 PostgreSQL RBAC 准备状态，客服被拦截。
+- `npm run smoke:rbac:postgres`：直连 PostgreSQL 沙箱检查角色、权限、成员权限和错误租户隔离。
+- `npm run smoke:session-adapter`：检查 `/api/auth/session-adapter-readiness`，确认业务 API 后续会通过统一上下文接真实 Session，而不是直接散落读取 Cookie 或请求头。
+- `npm run smoke:session-context`：检查 `/api/auth/session-context-readiness`，确认真实 Session 未来必须映射 `userId / tenantId / role / permissions`，并继续从 PostgreSQL RBAC 读取权限。
 - `npm run smoke:credentials`：检查 `/api/integrations/credential-readiness`，确认管理员可看凭证预检、客服被拦截、响应值不外露敏感内容。
 - `npm run smoke:support:postgres`：按 `tenant_id` 查询沙箱客服数据和数据接入沙箱连接，并检查没有真实邮箱域名或真实密钥。
 - `npm run smoke:integrations`：检查数据接入配置草案、CSV 上传配置和权限护栏。
@@ -167,6 +177,9 @@ node .\node_modules\next\dist\bin\next start -H 127.0.0.1 -p 4174
 npm run smoke:support:postgres-api
 npm run smoke:auth-readiness
 npm run smoke:permissions
+npm run smoke:rbac
+npm run smoke:session-adapter
+npm run smoke:session-context
 npm run smoke:credentials
 npm run smoke:integrations:postgres-api
 npm run smoke:sync:postgres-api
@@ -179,6 +192,9 @@ npm run smoke:sync:worker:postgres
 PostgreSQL API 烟测通过：14/14
 真实登录准备 API 烟测通过：3/3
 权限矩阵 API 烟测通过：4/4
+RBAC API 烟测通过：3/3
+Session 适配层 API 烟测通过：3/3
+真实 Session 上下文 API 烟测通过：3/3
 凭证安全 API 烟测通过：3/3
 PostgreSQL 数据接入 API 烟测通过：2/2
 PostgreSQL 同步 API 烟测通过：5/5

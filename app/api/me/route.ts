@@ -14,6 +14,9 @@ export async function GET(request: Request) {
     authSource: context.authSource,
     permissions: rolePermissions[context.role],
     permissionsMatrixEndpoint: "/api/permissions/matrix",
+    rbacReadinessEndpoint: "/api/permissions/rbac-readiness",
+    sessionAdapterReadinessEndpoint: "/api/auth/session-adapter-readiness",
+    sessionContextReadinessEndpoint: "/api/auth/session-context-readiness",
     authReadinessEndpoint: "/api/auth/session-readiness",
     authBoundary: {
       demoRoleOnly: true,
